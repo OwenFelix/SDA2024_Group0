@@ -23,20 +23,27 @@ from pathlib import Path
 
 
 def read_and_extract_data(URL, fn):
-    if not fn.exists():
-        r = requests.get(URL, stream=True)
-        if r.status_code == 200:
-            with open(fn.with_suffix(".zip"), 'wb') as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
-            with zipfile.ZipFile(fn.with_suffix(".zip"), 'r') as zip_ref:
-                zip_ref.extractall(fn.parent)
-            fn.with_suffix(".zip").unlink()
-            print("Downloaded and extracted data")
-        else:
-            print("Failed to download data")
-    else:
+    if fn.exists():
         print("Data already downloaded")
+        return
+
+    # Download the data
+    r = requests.get(URL, stream=True)
+    if not r.status_code == 200:
+        print("Failed to download data")
+        return
+
+    # Save the data to a zip file
+    with open(fn.with_suffix(".zip"), 'wb') as f:
+        r.raw.decode_content = True
+        shutil.copyfileobj(r.raw, f)
+
+    # Extract the zip file and remove it
+    with zipfile.ZipFile(fn.with_suffix(".zip"), 'r') as zip_ref:
+        zip_ref.extractall(fn.parent)
+    fn.with_suffix(".zip").unlink()
+
+    print("Downloaded and extracted data")
 
 
 if __name__ == "__main__":
