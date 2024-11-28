@@ -6,9 +6,9 @@ import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
 from shapely import affinity
 
-def fix_alaska(alaska_geom, threshold = 1e10):
+def fix_alaska(alaska_geom, scale, threshold = 1e10):
     # Scale Alaska's geometry (reduce size by 40% for both x and y axes)
-    alaska_scaled = affinity.scale(alaska_geom, xfact=0.3, yfact=0.3)
+    alaska_scaled = affinity.scale(alaska_geom, xfact=scale, yfact=scale)
 
     # Translate Alaska (move it to the lower-left of the contiguous U.S.)
     alaska_moved = affinity.translate(alaska_scaled, xoff=-7000000, yoff=-6500000)
@@ -17,12 +17,12 @@ def fix_alaska(alaska_geom, threshold = 1e10):
     filtered = [poly for poly in alaska_moved.geoms if poly.area > threshold]
     return MultiPolygon(filtered)
 
-def fix_hawaii(hawaii_geom):
+def fix_hawaii(hawaii_geom, scale):
     # Scale Hawaii's geometry (reduce size by 40% for both x and y axes)
-    hawaii_scaled = affinity.scale(hawaii_geom, xfact=15, yfact=15)
+    hawaii_scaled = affinity.scale(hawaii_geom, xfact=scale, yfact=scale)
 
     # Translate Hawaii (move it to the lower-left of the contiguous U.S.)
-    hawaii_moved = affinity.translate(hawaii_scaled, xoff=-3000000, yoff=-1400000)
+    hawaii_moved = affinity.translate(hawaii_scaled, xoff=6500000, yoff=500000)
     return hawaii_moved
     
   
@@ -36,13 +36,14 @@ for n in non_continental:
 
 # Get data for alaska
 alaska = us49.loc[us49['STUSPS'] == 'AK', 'geometry'].values[0]
-alaska = fix_alaska(alaska)
+alaska = fix_alaska(alaska, 0.3)
 
 hawaii = us49.loc[us49['STUSPS'] == 'HI', 'geometry'].values[0]
-hawaii = fix_hawaii(hawaii)
+hawaii = fix_hawaii(hawaii, 2)
 
 # Replace Alaska's geometry in the GeoDataFrame
 us49.loc[us49['STUSPS'] == 'AK', 'geometry'] = alaska
+us49.loc[us49['STUSPS'] == 'HI', 'geometry'] = hawaii
 
 voting_results = pd.read_csv('../data/election_results/voting.csv')
 
