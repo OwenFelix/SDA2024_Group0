@@ -29,27 +29,26 @@ def plot_us_map():
 
     # Exclude these territories from the map
     non_continental = ['VI','MP','GU','AS','PR']
-    us49 = states
     for n in non_continental:
-        us49 = us49[us49.STUSPS != n]
+        states = states[states.STUSPS != n]
 
     # Get data for alaska
-    alaska = us49.loc[us49['STUSPS'] == 'AK', 'geometry'].values[0]
+    alaska = states.loc[states['STUSPS'] == 'AK', 'geometry'].values[0]
     alaska = fix_alaska(alaska, 0.3)
 
     # Get data for hawaii
-    hawaii = us49.loc[us49['STUSPS'] == 'HI', 'geometry'].values[0]
+    hawaii = states.loc[states['STUSPS'] == 'HI', 'geometry'].values[0]
     hawaii = fix_hawaii(hawaii, 2)
 
     # Replace Alaska's and Hawaii's geometry in the GeoDataFrame
-    us49.loc[us49['STUSPS'] == 'AK', 'geometry'] = alaska
-    us49.loc[us49['STUSPS'] == 'HI', 'geometry'] = hawaii
+    states.loc[states['STUSPS'] == 'AK', 'geometry'] = alaska
+    states.loc[states['STUSPS'] == 'HI', 'geometry'] = hawaii
 
-    return us49
+    return states
 
 
 # Assign the correct color to each state and plot the map
-def plot_election_results(us49):
+def plot_election_results(states):
     # Read the voting data
     voting_results = pd.read_csv('../data/election_results/voting.csv')
 
@@ -60,14 +59,14 @@ def plot_election_results(us49):
     democrat_color = '#0000FF'
 
     # Set the colors for the states in the file
-    us49['COLOR'] = np.where(us49['NAME'].isin(trump_states), republican_color, democrat_color)
+    states['COLOR'] = np.where(states['NAME'].isin(trump_states), republican_color, democrat_color)
 
     republican_patch = mpatches.Patch(color=republican_color, label='Trump-Winning States')
     democrat_patch = mpatches.Patch(color=democrat_color, label='Biden-Winning States')
 
     # Plot the map 
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    us49.plot(color = us49['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = True, ax = ax)
+    states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = True, ax = ax)
 
     # Set the legend
     plt.legend(handles=[republican_patch, democrat_patch], loc='center left', bbox_to_anchor=(0.7, -0.1))
@@ -77,7 +76,7 @@ def plot_election_results(us49):
     plt.show()
 
 # Plot the map
-us49 = plot_us_map()
-# plot_election_results(us49)
+state_map = plot_us_map()
+plot_election_results(state_map)
 
 
