@@ -1,3 +1,8 @@
+"""
+HEADER
+TODO : FILL WITH DESCRIPTION OF CONTENT OF FILE
+"""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,6 +10,7 @@ import matplotlib.patches as mpatches
 import geopandas as gpd
 from shapely.geometry import MultiPolygon
 from shapely import affinity
+import matplotlib.colors as mcolors
 
 # Scale and translate Alaska and filter out the small islands
 def fix_alaska(alaska_geom, scale, threshold = 1e10):
@@ -22,7 +28,7 @@ def fix_hawaii(hawaii_geom, scale):
     return hawaii_moved
 
 # Make a plain US map
-def plot_us_map():  
+def generate_map():  
     # Read the shapefile for the US states
     states = gpd.read_file('../state_borders/cb_2018_us_state_500k.shp')
     states = states.to_crs("EPSG:3395")
@@ -75,8 +81,60 @@ def plot_election_results(states):
 
     plt.show()
 
+
+
+def make_example_dataset(states):
+    state_codes = states['STUSPS'].tolist()
+    
+    for state in state_codes:
+        # random float between -1 and 1
+        states.loc[states['STUSPS'] == state, 'trump_sentiment'] = np.random.uniform(-1, 1)
+        states.loc[states['STUSPS'] == state, 'biden_sentiment'] = np.random.uniform(-1, 1)
+
+    return states
+
+def get_sentiment_color(sentiment, color):
+    # Compute the weight of the target color and white
+    weight = (sentiment + 1) / 2  # Convert sentiment (-1 to 1) to a range of 0 to 1
+    white = mcolors.to_rgb('white')
+    target = mcolors.to_rgb(color)
+
+    # Compute the resulting color as a linear interpolation
+    result_color = tuple(((1 - weight) * white[i] + weight * target[i]) for i in range(3))
+    return result_color
+
+
+def plot_sentiment(states):
+    republican_color = '#FF0803'
+    democrat_color = '#0000FF'
+
+    # Create 2 plots, one for each candidate
+    fig, ax = plt.subplots(1, 2, figsize=(16, 5))
+
+    for i, candidate in enumerate(['trump', 'biden']):
+        # Set the colors for the states in the file
+        states['COLOR'] = states[f'{candidate}_sentiment'].apply(lambda x: get_sentiment_color(x, republican_color if candidate == 'trump' else democrat_color))
+
+        # Plot the map 
+        states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = False, ax = ax[i])
+
+        ax[i].set_title(f'{candidate.capitalize()} Sentiment by State')
+        ax[i].axis('off')
+
+    plt.show()
+
+
 # Plot the map
-state_map = plot_us_map()
+state_map = generate_map()
 plot_election_results(state_map)
+
+state_map_sent = make_example_dataset(state_map)
+plot_sentiment(state_map_sent)
+
+
+
+
+
+
 
 
