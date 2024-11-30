@@ -1,29 +1,39 @@
 import pandas as pd  # For data manipulation
 import matplotlib.pyplot as plt  # For plotting
 import numpy as np  # For numerical operations
+import pickle  # For saving the time series data
 
 
-# Define the custom weighted mean function
-def weighted_mean(x):
+def weighted_mean(x, sigma=4, alpha=2):
     """
-    Calculate the weighted mean of sentiment polarity for a group.
-    The weight of a single tweet is calculated by the formula:
-    weight = #likes + 2 * #retweets
+    Calculate the weighted mean of sentiment polarity for a group, using a combination of sentiment-based
+    weights and a Gaussian kernel.
 
-    :param group: DataFrame (a group of tweets within a time period)
+    :param x: DataFrame (a group of tweets within a time period)
+    :param sigma: Standard deviation for the Gaussian kernel
+    :param alpha: Balance factor for sentiment vs. Gaussian weights
     :return: Weighted mean of sentiment polarity
     """
-    # Extract columns: likes, retweets, sentiment_polarity
+    # Extract columns
     likes = x['likes']
     retweets = x['retweet_count']
     sentiment_polarity = x['sentiment_polarity']
 
-    # Calculate the weight
-    weight = np.log1p(likes) + 2 * np.log1p(retweets)
-    # Make sure tweets with no likes or retweets aren't ignored
-    weight = np.where(weight == 0, 1, weight)
+    # Calculate sentiment-based weights
+    sentiment_weight = 2 * np.log1p(likes) + 5 * np.log1p(retweets)
+    sentiment_weight = np.where(sentiment_weight == 0, 1, sentiment_weight)
 
-    return np.average(sentiment_polarity, weights=weight)
+    # Calculate Gaussian kernel weights
+    positions = np.arange(len(x))
+    center = len(x) // 2
+    gaussian_kernel = np.exp(-0.5 * ((positions - center) / sigma) ** 2)
+
+    # Combine sentiment and Gaussian weights
+    weight = alpha * sentiment_weight + (1 - alpha) * gaussian_kernel
+    weight /= np.sum(weight)  # Normalize weights
+
+    # Calculate the weighted mean of sentiment polarity
+    return np.sum(sentiment_polarity * weight)
 
 
 def create_timeseries(data, state, window_size):
@@ -77,4 +87,16 @@ def plot_sentiment_polarity(biden_data, trump_data, state, window_size):
 biden_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_joebiden.csv")
 trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
 
-plot_sentiment_polarity(biden_tweets, trump_tweets, 'Arizona', '24h')
+timeseries = []
+# get the five biggest red states and the five biggest blue states
+states = ['California', 'New York', 'Illinois', 'Washington', 'Michigan',
+          'Texas', 'Florida', 'Georgia', 'Ohio', 'North Carolina']
+
+for state in states:
+    # Save tuples of two time series (rump and biden) for each state
+    timeseries.append((create_timeseries(biden_tweets, state, '24h'),
+                      create_timeseries(trump_tweets, state, '24h')))
+
+# Save the time series in a file
+with open('../data/timeseries.pkl', 'wb') as f:
+    pickle.dump(timeseries, f)
