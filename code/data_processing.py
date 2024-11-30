@@ -222,10 +222,10 @@ trump_usa_tweets['sentiment_polarity'] = trump_usa_tweets['tweet'].apply(
 biden_usa_tweets['sentiment_polarity'] = biden_usa_tweets['tweet'].apply(
     lambda x: TextBlob(x).sentiment.polarity)
 
-# trump_usa_tweets['sentiment_subjectivity'] = trump_usa_tweets['tweet'].apply(
-#     lambda x: TextBlob(x).sentiment.subjectivity)
-# biden_usa_tweets['sentiment_subjectivity'] = biden_usa_tweets['tweet'].apply(
-#     lambda x: TextBlob(x).sentiment.subjectivity)
+trump_usa_tweets['sentiment_subjectivity'] = trump_usa_tweets['tweet'].apply(
+    lambda x: TextBlob(x).sentiment.subjectivity)
+biden_usa_tweets['sentiment_subjectivity'] = biden_usa_tweets['tweet'].apply(
+    lambda x: TextBlob(x).sentiment.subjectivity)
 
 pd.set_option('display.max_columns', None)
 print(trump_usa_tweets['tweet'].head())
@@ -234,3 +234,7 @@ print(trump_usa_tweets['sentiment_polarity'].head())
 print(biden_usa_tweets['sentiment_polarity'].head())
 print(trump_usa_tweets['sentiment_subjectivity'].head())
 print(biden_usa_tweets['sentiment_subjectivity'].head())
+
+# Save the new datasets to csv
+trump_usa_tweets.to_csv('../data/tweets/cleaned_hashtag_donaldtrump.csv', index=False)
+biden_usa_tweets.to_csv('../data/tweets/cleaned_hashtag_joebiden.csv', index=False)
