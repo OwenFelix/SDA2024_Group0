@@ -11,6 +11,7 @@ import geopandas as gpd
 from shapely.geometry import MultiPolygon
 from shapely import affinity
 import matplotlib.colors as mcolors
+from matplotlib.widgets import Slider
 
 # Scale and translate Alaska and filter out the small islands
 def fix_alaska(alaska_geom, scale, threshold = 1e10):
@@ -93,6 +94,22 @@ def make_example_dataset(states):
 
     return states
 
+def make_time_series_dataset(states, n_timestamps):
+    state_codes = states['STUSPS'].tolist()
+    
+    time_series_data = []
+
+    for state in state_codes:
+        state_data = {
+            'state': state,
+            'trump_sentiment': np.random.uniform(-1, 1, n_timestamps),
+            'biden_sentiment': np.random.uniform(-1, 1, n_timestamps)
+        }
+        time_series_data.append(state_data)
+
+    return pd.DataFrame(time_series_data)
+
+
 def get_sentiment_color(sentiment, color):
     # Compute the weight of the target color and white
     weight = (sentiment + 1) / 2  # Convert sentiment (-1 to 1) to a range of 0 to 1
@@ -123,16 +140,53 @@ def plot_sentiment(states):
 
     plt.show()
 
+def plot_time_series(states, time_series_data, n_timestamps):
+    # Make plot
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+    plt.subplots_adjust(bottom=0.25)
+
+    def get_time_series(t):
+        states['COLOR'] = [get_sentiment_color(x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
+        states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = False, ax = ax)
+        ax.axis('off')
+        ax.set_title('Trump Sentiment by State')
+
+    get_time_series(0)
+
+    # Set the axis and slider position in the plot
+    axis_position = plt.axes([0.2, 0.1, 0.65, 0.03],
+                            facecolor ='white')
+    slider_position = Slider(axis_position,
+                            'Time', valmin=0, valmax=9, valstep=1, valinit=0)
+    
+
+    # update() function to change the graph when the
+    # slider is in use
+    def update(val):
+        pos = slider_position.val
+        get_time_series(int(pos))
+        fig.canvas.draw_idle()
+
+    # Update function called using on_changed() function
+    slider_position.on_changed(update)
+    
+    # Display the plot
+    plt.show()
+
 
 # Plot the map
 state_map = generate_map()
-plot_election_results(state_map)
+# plot_election_results(state_map)
 
 state_map_sent = make_example_dataset(state_map)
-plot_sentiment(state_map_sent)
+# plot_sentiment(state_map_sent)
 
+# Time series example
+n_timestamps = 10
+state_map_ts = make_time_series_dataset(state_map, n_timestamps)
 
-
+print(state_map_ts)
+plot_time_series(state_map, state_map_ts, n_timestamps)
 
 
 
