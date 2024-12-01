@@ -29,7 +29,10 @@ def fix_hawaii(hawaii_geom, scale):
     return hawaii_moved
 
 # Make a plain US map
-def generate_map():  
+def generate_map():
+    """
+    Generate a map of the US states and clean up the geometry for Alaska and Hawaii.
+    """
     # Read the shapefile for the US states
     states = gpd.read_file('../state_borders/cb_2018_us_state_500k.shp')
     states = states.to_crs("EPSG:3395")
@@ -56,6 +59,9 @@ def generate_map():
 
 # Assign the correct color to each state and plot the map
 def plot_election_results(states):
+    """
+    Plot the results on a map of the US.
+    """
     # Read the voting data
     voting_results = pd.read_csv('../data/election_results/voting.csv')
 
@@ -95,6 +101,9 @@ def make_example_dataset(states):
     return states
 
 def make_time_series_dataset(states, n_timestamps):
+    """
+    Generate random time-series sentiment data for each state.
+    """
     state_codes = states['STUSPS'].tolist()
     
     time_series_data = []
@@ -111,6 +120,9 @@ def make_time_series_dataset(states, n_timestamps):
 
 
 def get_sentiment_color(sentiment, color):
+    """
+    Compute a color based on the sentiment value and a target color.
+    """
     # Compute the weight of the target color and white
     weight = (sentiment + 1) / 2  # Convert sentiment (-1 to 1) to a range of 0 to 1
     white = mcolors.to_rgb('white')
@@ -122,6 +134,9 @@ def get_sentiment_color(sentiment, color):
 
 
 def plot_sentiment(states):
+    """
+    Plot the sentiment of each state for each candidate on separate plots.
+    """
     republican_color = '#FF0803'
     democrat_color = '#0000FF'
 
@@ -141,27 +156,53 @@ def plot_sentiment(states):
     plt.show()
 
 def plot_time_series(states, time_series_data, n_timestamps):
-    # Make plot
-    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+    """
+    Plot a time series of sentiment data for each state, with a slider to change the timestamp.
+    """
+    # for single plot
+    # fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+
+    # for two plots
+    fig, ax = plt.subplots(1, 2, figsize=(16, 5))
+
     plt.subplots_adjust(bottom=0.25)
 
-    def get_time_series(t):
-        states['COLOR'] = [get_sentiment_color(x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
-        states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = False, ax = ax)
-        ax.axis('off')
-        ax.set_title('Trump Sentiment by State')
+    trump_color = '#FF0803'
+    biden_color = '#0000FF'
 
+    # Function to plot the map at a given timestamp
+    def get_time_series(t):
+        # for single plot
+        # states['COLOR'] = [get_sentiment_color(x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
+        # states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = False, ax = ax)
+        # ax.axis('off')
+        # ax.set_title('Trump Sentiment by State')
+
+        # for two plots
+        for i, candidate in enumerate(['trump', 'biden']):
+        # Set the colors for the states in the file
+            if candidate == 'trump':
+                color = trump_color
+            else:
+                color = biden_color
+            states['COLOR'] = [get_sentiment_color(x[t], color) for x in time_series_data[f'{candidate}_sentiment']]
+            # Plot the map 
+            states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = False, ax = ax[i])
+
+            ax[i].set_title(f'{candidate.capitalize()} Sentiment by State')
+            ax[i].axis('off')
+    
+    # Plot the initial time series
     get_time_series(0)
 
     # Set the axis and slider position in the plot
     axis_position = plt.axes([0.2, 0.1, 0.65, 0.03],
                             facecolor ='white')
     slider_position = Slider(axis_position,
-                            'Time', valmin=0, valmax=9, valstep=1, valinit=0)
+                            'Timestamp', valmin=0, valmax=n_timestamps-1, valstep=1, valinit=0)
     
 
-    # update() function to change the graph when the
-    # slider is in use
+    # Update function for when the slider is moved
     def update(val):
         pos = slider_position.val
         get_time_series(int(pos))
@@ -170,7 +211,6 @@ def plot_time_series(states, time_series_data, n_timestamps):
     # Update function called using on_changed() function
     slider_position.on_changed(update)
     
-    # Display the plot
     plt.show()
 
 
