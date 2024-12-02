@@ -12,6 +12,8 @@ from shapely.geometry import MultiPolygon
 from shapely import affinity
 import matplotlib.colors as mcolors
 from matplotlib.widgets import Slider
+import plotly.express as px
+
 
 # Scale and translate Alaska and filter out the small islands
 def fix_alaska(alaska_geom, scale, threshold = 1e10):
@@ -89,7 +91,6 @@ def plot_election_results(states):
     plt.show()
 
 
-
 def make_example_dataset(states):
     state_codes = states['STUSPS'].tolist()
     
@@ -117,6 +118,26 @@ def make_time_series_dataset(states, n_timestamps):
         time_series_data.append(state_data)
 
     return pd.DataFrame(time_series_data)
+
+def make_time_series_dataset_plotly(states, n_timestamps):
+    """
+    Generate random time-series sentiment data for each state.
+    """
+    state_codes = states['STUSPS'].tolist()
+    time_series_data = []
+
+    for state in state_codes:
+        for t in range(n_timestamps):
+            time_series_data.append({
+                'state': state,
+                'timestamp': t,
+                'trump_sentiment': np.random.uniform(-1, 1),
+                'biden_sentiment': np.random.uniform(-1, 1)
+            })
+
+    return pd.DataFrame(time_series_data)
+
+
 
 
 def get_sentiment_color(sentiment, color):
@@ -216,7 +237,7 @@ def plot_time_series(states, time_series_data, n_timestamps):
 
 # Plot the map
 state_map = generate_map()
-# plot_election_results(state_map)
+plot_election_results(state_map)
 
 state_map_sent = make_example_dataset(state_map)
 # plot_sentiment(state_map_sent)
@@ -225,10 +246,5 @@ state_map_sent = make_example_dataset(state_map)
 n_timestamps = 10
 state_map_ts = make_time_series_dataset(state_map, n_timestamps)
 
-print(state_map_ts)
-plot_time_series(state_map, state_map_ts, n_timestamps)
-
-
-
-
+# plot_time_series(state_map, state_map_ts, n_timestamps)
 
