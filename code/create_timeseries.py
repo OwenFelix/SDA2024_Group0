@@ -1,7 +1,7 @@
 import pandas as pd  # For data manipulation
 import matplotlib.pyplot as plt  # For plotting
 import numpy as np  # For numerical operations
-import pickle  # For saving the time series data
+import pickle  # For saving the model
 
 
 def weighted_mean(x, sigma=4, alpha=2):
@@ -59,7 +59,10 @@ def create_timeseries(data, state, window_size):
     for interval in rolling_tweets:
         intervals.append(weighted_mean(interval))
 
-    return intervals, tweets
+    # Make a list of tuples with the intervals and the corresponding dates
+    tupled_intervals = list(zip(intervals, tweets.index))
+
+    return intervals, tweets, tupled_intervals
 
 
 def plot_sentiment_polarity(biden_data, trump_data, state, window_size):
@@ -87,16 +90,17 @@ def plot_sentiment_polarity(biden_data, trump_data, state, window_size):
 biden_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_joebiden.csv")
 trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
 
-timeseries = []
-# get the five biggest red states and the five biggest blue states
+timeseries = {}
 states = ['California', 'New York', 'Illinois', 'Washington', 'Michigan',
           'Texas', 'Florida', 'Georgia', 'Ohio', 'North Carolina']
 
 for state in states:
-    # Save tuples of two time series (rump and biden) for each state
-    timeseries.append((create_timeseries(biden_tweets, state, '24h'),
-                      create_timeseries(trump_tweets, state, '24h')))
+    print(state)
+    _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
+    _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
+    timeseries[state] = {'biden': biden_tuples,
+                         'trump': trump_tuples}
 
-# Save the time series in a file
-with open('../data/timeseries.pkl', 'wb') as f:
+# Save the timeseries data
+with open('../data/tweets/timeseries.pkl', 'wb') as f:
     pickle.dump(timeseries, f)
