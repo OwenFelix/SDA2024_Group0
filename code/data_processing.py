@@ -191,6 +191,7 @@ def get_language(text):
 
 
 # Remove tweets that are in both datasets
+# TODO: Check this code and remove tweets that contain both #Trump and #Biden
 tids = trump_usa_tweets['tweet_id']
 bids = biden_usa_tweets['tweet_id']
 
