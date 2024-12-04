@@ -92,7 +92,11 @@ trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
 
 timeseries = {}
 
-state_codes = ['CA', 'NY', 'IL', 'WA', 'MI', 'TX', 'FL', 'GA', 'OH', 'NC']
+state_codes = ['CA', 'NY', 'IL', 'WA', 'MI', 'TX', 'FL', 'GA', 'OH', 'NC',
+               'PA', 'AZ', 'MA', 'NJ', 'VA', 'TN', 'IN', 'MO', 'MD', 'WI',
+               'MN', 'CO', 'AL', 'SC', 'LA', 'KY', 'OR', 'CT', 'IA', 'MS',
+               'AR', 'UT', 'NV', 'KS', 'NM', 'NE', 'ID', 'WV', 'HI', 'ME',
+               'NH', 'MT', 'RI', 'DE', 'SD', 'ND', 'AK', 'VT', 'WY']
 
 for state in state_codes:
     print(state)
