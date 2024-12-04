@@ -67,9 +67,9 @@ def create_timeseries(data, state_code, window_size):
 
 def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
     # Create time series for Joe Biden and Donald Trump
-    biden_intervals, tweets_biden = create_timeseries(
+    biden_intervals, tweets_biden, _ = create_timeseries(
         biden_data, state_code, window_size)
-    trump_intervals, tweets_trump = create_timeseries(
+    trump_intervals, tweets_trump, _ = create_timeseries(
         trump_data, state_code, window_size)
 
     # Plot the sentiment polarity
