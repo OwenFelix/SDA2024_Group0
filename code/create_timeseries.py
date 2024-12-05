@@ -1,3 +1,8 @@
+"""
+HEADER
+TODO : FILL WITH DESCRIPTION OF CONTENT OF FILE
+"""
+
 import pandas as pd  # For data manipulation
 import matplotlib.pyplot as plt  # For plotting
 import numpy as np  # For numerical operations
@@ -24,23 +29,23 @@ def weighted_mean(x, sigma=4, alpha=2):
     sentiment_weight = np.where(sentiment_weight == 0, 1, sentiment_weight)
 
     # Calculate Gaussian kernel weights
-    positions = np.arange(len(x))
-    center = len(x) // 2
-    gaussian_kernel = np.exp(-0.5 * ((positions - center) / sigma) ** 2)
+    # positions = np.arange(len(x))
+    # center = len(x) // 2
+    # gaussian_kernel = np.exp(-0.5 * ((positions - center) / sigma) ** 2)
 
     # Combine sentiment and Gaussian weights
-    weight = alpha * sentiment_weight + (1 - alpha) * gaussian_kernel
-    weight /= np.sum(weight)  # Normalize weights
+    # weight = alpha * sentiment_weight + (1 - alpha) * gaussian_kernel
+    sentiment_weight /= np.sum(sentiment_weight)  # Normalize weights
 
     # Calculate the weighted mean of sentiment polarity
-    return np.sum(sentiment_polarity * weight)
+    return np.sum(sentiment_polarity * sentiment_weight)
 
 
 def create_timeseries(data, state_code, window_size):
     tweets = data[data['state_code'] == state_code]
 
     # Convert the 'created_at' column to datetime and set it as the index
-    tweets['created_at'] = pd.to_datetime(tweets['created_at'])
+    tweets.loc[:, 'created_at'] = pd.to_datetime(tweets['created_at'])
     tweets = tweets.set_index('created_at')
 
     # Sort by datetime index
@@ -92,14 +97,14 @@ trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
 
 timeseries = {}
 
-state_codes = ['CA', 'NY', 'IL', 'WA', 'MI', 'TX', 'FL', 'GA', 'OH', 'NC']
+# state_codes = ['CA', 'NY', 'IL', 'WA', 'MI', 'TX', 'FL', 'GA', 'OH', 'NC']
 
-for state in state_codes:
-    print(state)
-    _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
-    _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
-    timeseries[state] = {'biden': biden_tuples,
-                         'trump': trump_tuples}
+# for state in state_codes:
+#     print(state)
+#     _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
+#     _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
+#     timeseries[state] = {'biden': biden_tuples,
+#                          'trump': trump_tuples}
 
 # Save the timeseries data
 with open('../data/timeseries.pkl', 'wb') as f:

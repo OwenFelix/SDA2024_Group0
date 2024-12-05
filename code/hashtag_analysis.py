@@ -1,6 +1,12 @@
+"""
+HEADER
+TODO : FILL WITH DESCRIPTION OF CONTENT OF FILE
+"""
+
 import pandas as pd  # For data manipulation
 import matplotlib.pyplot as plt  # For plotting
 from wordcloud import WordCloud  # For creating wordclouds
+from create_timeseries import weighted_mean
 
 # Get the tweet data for both candidates
 trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
@@ -46,6 +52,62 @@ def create_wordcloud(data, candidate):
     plt.title(f'Wordcloud of Hashtags for {candidate}')
     plt.show()
 
+# filter out hashtags that contain the string 'trump' or 'biden'
+def filter_candidates(data):
+    """
+    Filter out hashtags that contain the string 'trump' or 'biden'
+    """
+    data.loc[:, 'hashtags'] = data['hashtags'].apply(
+        lambda x: [i for i in x if 'trump' not in i.lower() and 'biden' not in i.lower()])
+
+    return data
+
+trump_hashtags = filter_candidates(trump_hashtags)
+biden_hashtags = filter_candidates(biden_hashtags)
+
+def create_time_series_not_per_state(data, window_size):
+    # Convert the 'created_at' column to datetime and set it as the index
+    data.loc[:, 'created_at'] = pd.to_datetime(data['created_at'])
+    data = data.set_index('created_at')
+    # data = data.sort_values('created_at')
+
+    # Sort by datetime index
+    data = data.sort_index()
+
+    # Ensure sentiment_polarity is in the correct format (float)
+    data['sentiment_polarity'] = data['sentiment_polarity'].astype(float)
+
+    # Create rolling windows based on the specified window size
+    rolling_data = data.rolling(window_size)
+
+    # Initialize a list to store processed intervals (weighted means)
+    intervals = []
+
+    # Loop through each window and calculate the weighted mean sentiment polarity
+    for interval in rolling_data:
+        intervals.append(weighted_mean(interval))
+
+    # Make a list of tuples with the intervals and the corresponding dates
+    tupled_intervals = list(zip(intervals, data.index))
+
+    return tupled_intervals
+
+def plot_sentiment_polarity_not_per_state(data, window_size):
+    # Create time series for Joe Biden and Donald Trump
+    intervals = create_time_series_not_per_state(data, window_size)
+
+    # Plot the sentiment polarity
+    plt.figure(figsize=(12, 6))
+    plt.plot([i[1] for i in intervals], [i[0] for i in intervals],
+             label='Sentiment Polarity', color='blue')
+    plt.axhline(y=0, color='black', linestyle='--', label='Neutral')
+    plt.xlabel('Date')
+    plt.ylabel('Sentiment Polarity')
+    plt.title('Sentiment Polarity of Tweets')
+    plt.legend()
+    plt.show()
+
+
 
 # create_wordcloud(trump_hashtags, 'Trump')
 # create_wordcloud(biden_hashtags, 'Biden')
@@ -57,13 +119,17 @@ pd.set_option('display.max_colwidth', None)
 # Get the most popular hashtag for each day
 def create_hashtag_time_series(data, window_size, candidate):
     """
-    This creates a time-series where we get the most popular hashtag used
-    on a certain for a certain state.
+    Create a time-series where we get the most popular hashtag used
+    on a certain day for a certain candidate.
     """
-    # Convert the 'created_at' column to datetime
+    # Convert 'created_at' column to datetime
     data.loc[:, 'created_at'] = pd.to_datetime(data['created_at'])
 
+    # Explode the hashtags column to have one hashtag per row
     data = data.explode('hashtags')
+
+    # Ensure 'hashtags' is a string to avoid dtype inference issues
+    data['hashtags'] = data['hashtags'].astype(str)
 
     # Group by time windows and find the most popular hashtag
     time_series = (
@@ -76,40 +142,13 @@ def create_hashtag_time_series(data, window_size, candidate):
     return time_series
 
 
-    # data = data.set_index('created_at')
-    # data = data.sort_index()
+# plot_sentiment_polarity_not_per_state(trump_hashtags, '24h')
+# plot_sentiment_polarity_not_per_state(biden_hashtags, '24h')
 
-    # Create a rolling windows based on the specified window size
-    # rolling_data = data.rolling(window_size)
-    # print()
-
-    # # Initialize a list to store the most popular hashtags
-    # hashtags = []
-
-    # # Loop through each window and get the most popular hashtag
-    # for window in rolling_data:
-    #     # print(window['hashtags'].value_counts().idxmax())
-    #     hashtags.append(window['hashtags'].value_counts().idxmax())
-
-    # # Get the date and hashtags columns
-    # hashtags = data[['created_at', 'hashtags']].copy()
-
-    # # Create a new column with the most popular hashtag for each day
-    # hashtags['most_popular_hashtag'] = hashtags['hashtags'].apply(
-    #     lambda x: pd.Series(x).value_counts().idxmax())
-
-    # # Group by date and get the most popular hashtag
-    # hashtags = hashtags.groupby('created_at')['most_popular_hashtag'].apply(
-    #     lambda x: x.value_counts().idxmax()).reset_index()
-
-    # Set the date as the index
-    # hashtags = hashtags.set_index('created_at')
-
-    # return hashtags
-
-trump_hashtags_timeseries = create_hashtag_time_series(trump_hashtags, '24h', 'Trump')
-biden_hashtags_timeseries = create_hashtag_time_series(biden_hashtags, '24h', 'Biden')
+trump_hashtags_timeseries = create_hashtag_time_series(trump_hashtags, '12h', 'Trump')
+biden_hashtags_timeseries = create_hashtag_time_series(biden_hashtags, '12h', 'Biden')
 print(trump_hashtags_timeseries)
 print(biden_hashtags_timeseries)
-# print(trump_hashtags_timeseries.shape)
+print(trump_hashtags_timeseries.shape)
+print(biden_hashtags_timeseries.shape)
 
