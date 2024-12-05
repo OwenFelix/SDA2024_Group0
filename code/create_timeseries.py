@@ -101,10 +101,6 @@ trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
 
 timeseries = {}
 
-voting_results = pd.read_csv('../data/election_results/voting.csv')
-state_codes = voting_results['state_abr'].tolist()
-# print(state_codes)
-
 # state_codes = ['CA', 'NY', 'IL', 'WA', 'MI', 'TX', 'FL', 'GA', 'OH', 'NC']
 
 # for state in state_codes:
