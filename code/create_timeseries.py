@@ -67,9 +67,9 @@ def create_timeseries(data, state_code, window_size):
 
 def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
     # Create time series for Joe Biden and Donald Trump
-    biden_intervals, tweets_biden = create_timeseries(
+    biden_intervals, tweets_biden, _ = create_timeseries(
         biden_data, state_code, window_size)
-    trump_intervals, tweets_trump = create_timeseries(
+    trump_intervals, tweets_trump, _ = create_timeseries(
         trump_data, state_code, window_size)
 
     # Plot the sentiment polarity
@@ -90,21 +90,23 @@ def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
 biden_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_joebiden.csv")
 trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
 
-timeseries = {}
+plot_sentiment_polarity(biden_tweets, trump_tweets, 'CA', '24h')
 
-state_codes = ['CA', 'NY', 'IL', 'WA', 'MI', 'TX', 'FL', 'GA', 'OH', 'NC',
-               'PA', 'AZ', 'MA', 'NJ', 'VA', 'TN', 'IN', 'MO', 'MD', 'WI',
-               'MN', 'CO', 'AL', 'SC', 'LA', 'KY', 'OR', 'CT', 'IA', 'MS',
-               'AR', 'UT', 'NV', 'KS', 'NM', 'NE', 'ID', 'WV', 'HI', 'ME',
-               'NH', 'MT', 'RI', 'DE', 'SD', 'ND', 'AK', 'VT', 'WY']
+# timeseries = {}
 
-for state in state_codes:
-    print(state)
-    _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
-    _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
-    timeseries[state] = {'biden': biden_tuples,
-                         'trump': trump_tuples}
+# state_codes = ['CA', 'NY', 'IL', 'WA', 'MI', 'TX', 'FL', 'GA', 'OH', 'NC',
+#                'PA', 'AZ', 'MA', 'NJ', 'VA', 'TN', 'IN', 'MO', 'MD', 'WI',
+#                'MN', 'CO', 'AL', 'SC', 'LA', 'KY', 'OR', 'CT', 'IA', 'MS',
+#                'AR', 'UT', 'NV', 'KS', 'NM', 'NE', 'ID', 'WV', 'HI', 'ME',
+#                'NH', 'MT', 'RI', 'DE', 'SD', 'ND', 'AK', 'VT', 'WY']
 
-# Save the timeseries data
-with open('../data/timeseries.pkl', 'wb') as f:
-    pickle.dump(timeseries, f)
+# for state in state_codes:
+#     print(state)
+#     _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
+#     _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
+#     timeseries[state] = {'biden': biden_tuples,
+#                          'trump': trump_tuples}
+
+# # Save the timeseries data
+# with open('../data/timeseries.pkl', 'wb') as f:
+#     pickle.dump(timeseries, f)

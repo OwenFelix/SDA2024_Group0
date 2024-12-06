@@ -166,10 +166,10 @@ for state in timeseries.keys():
     std_r = std_ratio(biden_sentiment, trump_sentiment)
 
     # Calculate cumulative difference in sentiment
-    cumdiff = dtw_cumdiff(biden_sentiment, trump_sentiment)[-1]
+    # cumdiff = dtw_cumdiff(biden_sentiment, trump_sentiment)[-1]
 
     # Calculate AUC
-    auc_biden, auc_trump = dtw_auc(biden_sentiment, trump_sentiment)
+    # auc_biden, auc_trump = dtw_auc(biden_sentiment, trump_sentiment)
 
     # Calculate skewness
     skew_biden = skewness(biden_sentiment)
@@ -194,9 +194,9 @@ for state in timeseries.keys():
     # Vectorize the features
     features[state] = {'mean_diff': mean_diff,
                        'std_ratio': std_r,
-                       'cumdiff': cumdiff,
-                       'auc_biden': auc_biden,
-                       'auc_trump': auc_trump,
+                       #    'cumdiff': cumdiff,
+                       #    'auc_biden': auc_biden,
+                       #    'auc_trump': auc_trump,
                        'skew_biden': skew_biden,
                        'skew_trump': skew_trump,
                        'kurt_biden': kurt_biden,
@@ -205,3 +205,8 @@ for state in timeseries.keys():
                        'dtw_dist': dtw_dist,
                        'ks': ks_statistic,
                        'slope': slope}
+
+
+# Save the features to a pickle file
+with open('../data/features.pkl', 'wb') as f:
+    pickle.dump(features, f)
