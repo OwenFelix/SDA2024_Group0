@@ -1,12 +1,7 @@
-"""
-HEADER
-TODO : FILL WITH DESCRIPTION OF CONTENT OF FILE
-"""
-
 import pandas as pd  # For data manipulation
 import matplotlib.pyplot as plt  # For plotting
 from wordcloud import WordCloud  # For creating wordclouds
-from create_timeseries import weighted_mean
+from create_timeseries import weighted_mean  # For calculating weighted mean of sentiment polarity
 
 # Get the tweet data for both candidates
 trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
@@ -62,8 +57,13 @@ def filter_candidates(data):
 
     return data
 
+# Get the dataframes with the filtered tweets
 trump_hashtags = filter_candidates(trump_hashtags)
 biden_hashtags = filter_candidates(biden_hashtags)
+
+
+# create_wordcloud(trump_hashtags, 'Trump')
+# create_wordcloud(biden_hashtags, 'Biden')
 
 def create_time_series_not_per_state(data, window_size):
     # Convert the 'created_at' column to datetime and set it as the index
@@ -107,11 +107,6 @@ def plot_sentiment_polarity_not_per_state(data, window_size):
     plt.legend()
     plt.show()
 
-
-
-# create_wordcloud(trump_hashtags, 'Trump')
-# create_wordcloud(biden_hashtags, 'Biden')
-
 # Plan for the next steps:
 # Create timeseries where we get the most popular hashtag used on a certain day
 # Then find a way to link it to the events that happened on that day
@@ -119,17 +114,13 @@ pd.set_option('display.max_colwidth', None)
 # Get the most popular hashtag for each day
 def create_hashtag_time_series(data, window_size, candidate):
     """
-    Create a time-series where we get the most popular hashtag used
-    on a certain day for a certain candidate.
+    This creates a time-series where we get the most popular hashtag used
+    on a certain for a certain state.
     """
-    # Convert 'created_at' column to datetime
+    # Convert the 'created_at' column to datetime
     data.loc[:, 'created_at'] = pd.to_datetime(data['created_at'])
 
-    # Explode the hashtags column to have one hashtag per row
     data = data.explode('hashtags')
-
-    # Ensure 'hashtags' is a string to avoid dtype inference issues
-    data['hashtags'] = data['hashtags'].astype(str)
 
     # Group by time windows and find the most popular hashtag
     time_series = (
@@ -142,13 +133,12 @@ def create_hashtag_time_series(data, window_size, candidate):
     return time_series
 
 
-# plot_sentiment_polarity_not_per_state(trump_hashtags, '24h')
-# plot_sentiment_polarity_not_per_state(biden_hashtags, '24h')
+plot_sentiment_polarity_not_per_state(trump_hashtags, '24h')
+plot_sentiment_polarity_not_per_state(biden_hashtags, '24h')
 
-trump_hashtags_timeseries = create_hashtag_time_series(trump_hashtags, '12h', 'Trump')
-biden_hashtags_timeseries = create_hashtag_time_series(biden_hashtags, '12h', 'Biden')
+trump_hashtags_timeseries = create_hashtag_time_series(trump_hashtags, '24h', 'Trump')
+biden_hashtags_timeseries = create_hashtag_time_series(biden_hashtags, '24h', 'Biden')
 print(trump_hashtags_timeseries)
 print(biden_hashtags_timeseries)
 print(trump_hashtags_timeseries.shape)
 print(biden_hashtags_timeseries.shape)
-
