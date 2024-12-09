@@ -17,6 +17,7 @@ from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import f1_score
 from sklearn.pipeline import Pipeline
+from scipy.stats import ttest_1samp
 
 
 def load_data():
@@ -208,7 +209,8 @@ def evaluate_model(final_model, X_train, y_train,
     accuracy = np.mean(swing_predictions == y_swing)
     print(f'Swing state accuracy: {accuracy:.2f}')
 
-    cv_accuracy = cross_val_score(final_model, X_train, y_train, cv=5)
+    cv_accuracy = cross_val_score(final_model, X_train, y_train, cv=5,
+                                  scoring='accuracy', n_jobs=-1)
     print(f'Cross-validation accuracy: {np.mean(cv_accuracy):.2f}')
 
     f1 = f1_score(y_swing, swing_predictions)
@@ -218,10 +220,8 @@ def evaluate_model(final_model, X_train, y_train,
 def test_robustness(final_model, X_train, y_train, X_swing, y_swing):
     """
     Test the robustness of the model by adding noise to the features.
-    After adding noise, evaluate the model and print the average accuracy,
-    cross-validation accuracy, and F1 score over n iterations.
+    Perform hypothesis testing to check if the model performs significantly better than random guessing.
     """
-
     n = 1000
     accuracy = []
     cv_accuracy = []
@@ -243,9 +243,49 @@ def test_robustness(final_model, X_train, y_train, X_swing, y_swing):
             final_model, X_train_noisy, y_train, cv=5)))
         f1.append(f1_score(y_swing, swing_predictions))
 
+    # Convert to numpy arrays
+    accuracy = np.array(accuracy)
+    cv_accuracy = np.array(cv_accuracy)
+    f1 = np.array(f1)
+
+    # Calculate average metrics
     print(f'Average swing state accuracy: {np.mean(accuracy):.2f}')
     print(f'Average cross-validation accuracy: {np.mean(cv_accuracy):.2f}')
     print(f'Average F1 score: {np.mean(f1):.2f}')
+
+    # Calculate 95% confidence intervals
+    print(
+        f'Accuracy 95% confidence interval: {np.percentile(accuracy, [2.5, 97.5])}')
+    print(
+        f'Cross-validation accuracy 95% confidence interval: {np.percentile(cv_accuracy, [2.5, 97.5])}')
+    print(
+        f'F1 score 95% confidence interval: {np.percentile(f1, [2.5, 97.5])}')
+
+    # Perform hypothesis testing (H₀: mean = 0.50, H₁: mean > 0.50)
+    accuracy_p_value = ttest_1samp(
+        accuracy, popmean=0.50, alternative='greater').pvalue
+    cv_accuracy_p_value = ttest_1samp(
+        cv_accuracy, popmean=0.50, alternative='greater').pvalue
+    f1_p_value = ttest_1samp(f1, popmean=0.50, alternative='greater').pvalue
+
+    print(f'Accuracy p-value: {accuracy_p_value:.4f}')
+    print(f'Cross-validation accuracy p-value: {cv_accuracy_p_value:.4f}')
+    print(f'F1 score p-value: {f1_p_value:.4f}')
+
+    if accuracy_p_value < 0.05:
+        print('Reject null hypothesis for accuracy')
+    else:
+        print('Fail to reject null hypothesis for accuracy')
+
+    if cv_accuracy_p_value < 0.05:
+        print('Reject null hypothesis for cross-validation accuracy')
+    else:
+        print('Fail to reject null hypothesis for cross-validation accuracy')
+
+    if f1_p_value < 0.05:
+        print('Reject null hypothesis for F1 score')
+    else:
+        print('Fail to reject null hypothesis for F1 score')
 
 
 def main():
