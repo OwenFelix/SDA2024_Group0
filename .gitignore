@@ -1,4 +1,4 @@
 data/covid
 data/election_results
 data/tweets
-
+__pycache__/
