@@ -8,8 +8,10 @@ hashtag_joebiden.csv files. The preprocessing steps include:
 2. Filtering out tweets that are not from the United States of America
 3. Dropping rows with missing values
 4. Removing tweets that are in both datasets
-5. Cleaning the tweets
-6. Performing the polarity sentiment analysis on the tweets
+5. Detecting the language of the tweets.
+6. Translating the Spanish tweets to English
+7. Cleaning the tweets
+8. Performing the polarity sentiment analysis on the tweets
 """
 
 # Importing the required libraries
@@ -21,6 +23,8 @@ from nltk.corpus import stopwords  # For stopwords
 from nltk.corpus import wordnet  # For POS tagging
 from nltk.stem import WordNetLemmatizer  # For lemmatizing words
 from textblob import TextBlob  # For sentiment analysis
+import langid  # For language detection
+from googletrans import Translator  # For translation
 
 import nltk  # For natural language processing
 nltk.download('stopwords')  # Download the stopwords
@@ -68,6 +72,19 @@ def remove_stopwords(text):
                     text.split() if word not in stop_words)
 
 
+def pre_translation_clean(text):
+    """
+    This function romoves the usernames and URLs from the text data before language detection.
+    """
+    # Remove usernames from the text
+    text = re.sub(r'@\S+', '', text)
+
+    # Remove URLs entirely
+    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+
+    return text
+
+
 def clean_tweet_data(text):
     """
     This function cleans the text data by removing HTML tags, usernames,
@@ -78,12 +95,6 @@ def clean_tweet_data(text):
 
     # Remove HTML tags
     text = re.sub(r'<.*?>', '', text)
-
-    # Remove usernames
-    text = re.sub(r'@[A-Za-z0-9]+', '', text)
-
-    # Remove URLs entirely
-    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
 
     # Replace emoji with text for the expression of the emoji
     text = emoji.demojize(text)
@@ -109,6 +120,29 @@ def clean_tweet_data(text):
     text = ' '.join([word for word in text.split() if len(word) > 2])
 
     return text
+
+
+def get_language(text):
+    """
+    This function detects the language of the text.
+    """
+    try:
+        return langid.classify(text)[0]
+    except:
+        return 'unknown'
+
+
+def safe_translate(text):
+    """
+    This function translates the Spanish text to English.
+    """
+    try:
+        translator = Translator()
+        translation = translator.translate(text, src='es', dest='en').text
+        return translation
+    except Exception as e:
+        print(f"Error translating text: {text}. Exception: {e}")
+        return text  # Return the original text if translation fails
 
 
 # Load the datasets
@@ -147,6 +181,27 @@ ids_tweets_in_common = set(trump_tweets['tweet_id']).intersection(
     set(biden_tweets['tweet_id']))
 trump_tweets = trump_tweets[~tids.isin(ids_tweets_in_common)]
 biden_tweets = biden_tweets[~bids.isin(ids_tweets_in_common)]
+
+# Apply the pre clean before detecting the language
+trump_tweets['tweet'] = trump_tweets['tweet'].apply(pre_translation_clean)
+biden_tweets['tweet'] = biden_tweets['tweet'].apply(pre_translation_clean)
+
+print("Detecting language")
+# Detect language for all tweets in the dataset
+trump_tweets['language'] = trump_tweets['tweet'].apply(
+    lambda x: get_language(x))
+biden_tweets['language'] = biden_tweets['tweet'].apply(lambda x: get_language(x))
+print("Done detecting language")
+
+# Translate the Spanish tweets to English
+trump_tweets['tweet'] = trump_tweets.apply(
+    lambda row: safe_translate(row['tweet']) if row['language'] == 'es' else row['tweet'],
+    axis=1
+)
+biden_tweets['tweet'] = biden_tweets.apply(
+    lambda row: safe_translate(row['tweet']) if row['language'] == 'es' else row['tweet'],
+    axis=1
+)
 
 # Clean the tweets
 trump_tweets['tweet'] = trump_tweets['tweet'].apply(clean_tweet_data)
