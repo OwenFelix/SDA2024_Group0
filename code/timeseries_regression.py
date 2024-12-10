@@ -220,7 +220,8 @@ def evaluate_model(final_model, X_train, y_train,
 def test_robustness(final_model, X_train, y_train, X_swing, y_swing):
     """
     Test the robustness of the model by adding noise to the features.
-    Perform hypothesis testing to check if the model performs significantly better than random guessing.
+    Perform hypothesis testing to check if the model performs significantly
+    better than random guessing.
     """
     n = 1000
     accuracy = []
@@ -255,11 +256,14 @@ def test_robustness(final_model, X_train, y_train, X_swing, y_swing):
 
     # Calculate 95% confidence intervals
     print(
-        f'Accuracy 95% confidence interval: {np.percentile(accuracy, [2.5, 97.5])}')
+        f'Accuracy 95% confidence interval:'
+        f'{np.percentile(accuracy, [2.5, 97.5])}')
     print(
-        f'Cross-validation accuracy 95% confidence interval: {np.percentile(cv_accuracy, [2.5, 97.5])}')
+        f'Cross-validation accuracy 95% confidence interval:'
+        f'{np.percentile(cv_accuracy, [2.5, 97.5])}')
     print(
-        f'F1 score 95% confidence interval: {np.percentile(f1, [2.5, 97.5])}')
+        f'F1 score 95% confidence interval:'
+        f'{np.percentile(f1, [2.5, 97.5])}')
 
     # Perform hypothesis testing (H₀: mean = 0.50, H₁: mean > 0.50)
     accuracy_p_value = ttest_1samp(
