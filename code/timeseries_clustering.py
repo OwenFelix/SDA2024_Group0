@@ -2,7 +2,6 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 
 # Load in the timeseries data
 with open('../data/features.pkl', 'rb') as f:
@@ -38,16 +37,14 @@ X = np.array([list(timeseries_features[state].values())
 # standardize the features
 X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
 
-X_reduced = X
-
 # Initialize the KMeans model
 kmeans = KMeans(n_clusters=2, random_state=567)
 
 # Fit the model to the features
-kmeans.fit(X_reduced)
+kmeans.fit(X)
 
 # Get the cluster assignments
-cluster_assignments = kmeans.predict(X_reduced)
+cluster_assignments = kmeans.predict(X)
 
 # # print the cluster assignments
 for state, cluster in zip(blue_states + red_states, cluster_assignments):
@@ -59,14 +56,15 @@ accuracy = np.mean(cluster_assignments == true_labels)
 print(f'Accuracy: {accuracy}')
 
 # Plot the clusters. Make label 0 blue and label 1 red
-plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=cluster_assignments, cmap='coolwarm')
+plt.subplot(1, 2, 1)
+plt.scatter(X[:, 0], X[:, 1], c=cluster_assignments, cmap='coolwarm')
 plt.xlabel('Principal Component 1')
 plt.ylabel('Principal Component 2')
 plt.title('KMeans Clustering of Blue and Red States')
 
 # Plot the clusters with the true labels (blue being 0 and red being 1) next to them
-plt.figure()
-plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=true_labels, cmap='coolwarm')
+plt.subplot(1, 2, 2)
+plt.scatter(X[:, 0], X[:, 1], c=true_labels, cmap='coolwarm')
 plt.xlabel('Principal Component 1')
 plt.ylabel('Principal Component 2')
 plt.title('True Labels of Blue and Red States')

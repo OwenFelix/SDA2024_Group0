@@ -38,25 +38,6 @@ def dtw_cumdiff(sentiment1, sentiment2):
     return cumdiff  # Return the final cumulative difference value
 
 
-def dtw_auc(sentiment1, sentiment2):
-    """
-    Calculate the Area Under Curve (AUC) of two timeseries using DTW.
-    """
-    # Step 1: Apply DTW to the two time series
-    _, path = fastdtw.fastdtw(sentiment1, sentiment2)
-
-    # Step 2: Interpolate the aligned series onto a common time grid
-    aligned_sentiment1 = np.array([sentiment1[i] for i, j in path])
-    aligned_sentiment2 = np.array([sentiment2[j] for i, j in path])
-
-    # Step 3: Calculate the AUC of the aligned series
-    # Use trapezoidal integration to calculate the area under the curve
-    auc_sentiment1 = np.trapz(aligned_sentiment1)
-    auc_sentiment2 = np.trapz(aligned_sentiment2)
-
-    return auc_sentiment1, auc_sentiment2
-
-
 def skewness(sentiment):
     """
     Calculate the skewness of a timeseries.
@@ -165,12 +146,6 @@ for state in timeseries.keys():
     # Calculate std ratio
     std_r = std_ratio(biden_sentiment, trump_sentiment)
 
-    # Calculate cumulative difference in sentiment
-    # cumdiff = dtw_cumdiff(biden_sentiment, trump_sentiment)[-1]
-
-    # Calculate AUC
-    # auc_biden, auc_trump = dtw_auc(biden_sentiment, trump_sentiment)
-
     # Calculate skewness
     skew_biden = skewness(biden_sentiment)
     skew_trump = skewness(trump_sentiment)
@@ -194,9 +169,6 @@ for state in timeseries.keys():
     # Vectorize the features
     features[state] = {'mean_diff': mean_diff,
                        'std_ratio': std_r,
-                       #    'cumdiff': cumdiff,
-                       #    'auc_biden': auc_biden,
-                       #    'auc_trump': auc_trump,
                        'skew_biden': skew_biden,
                        'skew_trump': skew_trump,
                        'kurt_biden': kurt_biden,
