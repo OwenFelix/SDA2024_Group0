@@ -190,18 +190,25 @@ print("Detecting language")
 # Detect language for all tweets in the dataset
 trump_tweets['language'] = trump_tweets['tweet'].apply(
     lambda x: get_language(x))
-biden_tweets['language'] = biden_tweets['tweet'].apply(lambda x: get_language(x))
+print("Done detecting the Trump tweets")
+biden_tweets['language'] = biden_tweets['tweet'].apply(
+    lambda x: get_language(x))
 print("Done detecting language")
 
+print("Translating Spanish tweets")
 # Translate the Spanish tweets to English
 trump_tweets['tweet'] = trump_tweets.apply(
-    lambda row: safe_translate(row['tweet']) if row['language'] == 'es' else row['tweet'],
+    lambda row: safe_translate(
+        row['tweet']) if row['language'] == 'es' else row['tweet'],
     axis=1
 )
+print("Done translating the Trump tweets")
 biden_tweets['tweet'] = biden_tweets.apply(
-    lambda row: safe_translate(row['tweet']) if row['language'] == 'es' else row['tweet'],
+    lambda row: safe_translate(
+        row['tweet']) if row['language'] == 'es' else row['tweet'],
     axis=1
 )
+print("Done translating the tweets")
 
 # Clean the tweets
 trump_tweets['tweet'] = trump_tweets['tweet'].apply(clean_tweet_data)
