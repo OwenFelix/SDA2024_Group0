@@ -45,6 +45,10 @@ def weighted_mean(x):
 
 
 def create_timeseries(data, state_code, window_size):
+    """
+    Create time series data for a given state based on the sentiment
+    polarity of tweets.
+    """
     tweets = data[data['state_code'] == state_code]
 
     # Convert the 'created_at' column to datetime and set it as the index
@@ -99,20 +103,17 @@ def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
 biden_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_joebiden.csv")
 trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
 
-timeseries = {}
-
+# Get the states codes
 voting_results = pd.read_csv('../data/election_results/voting.csv')
 state_codes = voting_results['state_abr'].tolist()
-# print(state_codes)
 
-# state_codes = ['CA', 'NY', 'IL', 'WA', 'MI', 'TX', 'FL', 'GA', 'OH', 'NC']
-
-# for state in state_codes:
-#     print(state)
-#     _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
-#     _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
-#     timeseries[state] = {'biden': biden_tuples,
-#                          'trump': trump_tuples}
+# Create time series data for each state
+timeseries = {}
+for state in state_codes:
+    _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
+    _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
+    timeseries[state] = {'biden': biden_tuples,
+                         'trump': trump_tuples}
 
 # Save the timeseries data
 with open('../data/timeseries.pkl', 'wb') as f:
