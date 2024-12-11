@@ -8,10 +8,9 @@ hashtag_joebiden.csv files. The preprocessing steps include:
 2. Filtering out tweets that are not from the United States of America
 3. Dropping rows with missing values
 4. Removing tweets that are in both datasets
-5. Detecting the language of the tweets.
-6. Translating the Spanish tweets to English
-7. Cleaning the tweets
-8. Performing the polarity sentiment analysis on the tweets
+5. Detecting the language of the tweets and only saving the English tweets
+6. Cleaning the tweets
+7. Performing the polarity sentiment analysis on the tweets
 """
 
 # Importing the required libraries
@@ -24,7 +23,6 @@ from nltk.corpus import wordnet  # For POS tagging
 from nltk.stem import WordNetLemmatizer  # For lemmatizing words
 from textblob import TextBlob  # For sentiment analysis
 import langid  # For language detection
-from googletrans import Translator  # For translation
 
 import nltk  # For natural language processing
 nltk.download('stopwords')  # Download the stopwords
@@ -72,7 +70,7 @@ def remove_stopwords(text):
                     text.split() if word not in stop_words)
 
 
-def pre_translation_clean(text):
+def pre_langdetect_clean(text):
     """
     This function romoves the usernames and URLs from the text data before language detection.
     """
@@ -170,8 +168,8 @@ trump_tweets = trump_tweets[~tids.isin(ids_tweets_in_common)]
 biden_tweets = biden_tweets[~bids.isin(ids_tweets_in_common)]
 
 # Apply the pre clean before detecting the language
-trump_tweets['tweet'] = trump_tweets['tweet'].apply(pre_translation_clean)
-biden_tweets['tweet'] = biden_tweets['tweet'].apply(pre_translation_clean)
+trump_tweets['tweet'] = trump_tweets['tweet'].apply(pre_langdetect_clean)
+biden_tweets['tweet'] = biden_tweets['tweet'].apply(pre_langdetect_clean)
 
 # Detect language for all tweets in the dataset
 trump_tweets['language'] = trump_tweets['tweet'].apply(

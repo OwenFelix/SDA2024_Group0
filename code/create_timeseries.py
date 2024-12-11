@@ -118,3 +118,4 @@ for state in state_codes:
 # Save the timeseries data
 with open('../data/timeseries.pkl', 'wb') as f:
     pickle.dump(timeseries, f)
+    
