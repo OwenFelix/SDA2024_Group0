@@ -259,7 +259,7 @@ def plot_time_series(states, time_series_data, n_timestamps):
 
 # Plot the map
 state_map = generate_map()
-plot_election_results(state_map)
+# plot_election_results(state_map)
 
 state_map_sent = make_example_dataset(state_map)
 # plot_sentiment(state_map_sent)

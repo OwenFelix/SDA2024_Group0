@@ -132,19 +132,6 @@ def get_language(text):
         return 'unknown'
 
 
-def safe_translate(text):
-    """
-    This function translates the Spanish text to English.
-    """
-    try:
-        translator = Translator()
-        translation = translator.translate(text, src='es', dest='en').text
-        return translation
-    except Exception as e:
-        print(f"Error translating text: {text}. Exception: {e}")
-        return text  # Return the original text if translation fails
-
-
 # Load the datasets
 trump_tweets = read_data("../data/tweets/hashtag_donaldtrump.csv")
 biden_tweets = read_data("../data/tweets/hashtag_joebiden.csv")
@@ -186,29 +173,15 @@ biden_tweets = biden_tweets[~bids.isin(ids_tweets_in_common)]
 trump_tweets['tweet'] = trump_tweets['tweet'].apply(pre_translation_clean)
 biden_tweets['tweet'] = biden_tweets['tweet'].apply(pre_translation_clean)
 
-print("Detecting language")
 # Detect language for all tweets in the dataset
 trump_tweets['language'] = trump_tweets['tweet'].apply(
     lambda x: get_language(x))
-print("Done detecting the Trump tweets")
 biden_tweets['language'] = biden_tweets['tweet'].apply(
     lambda x: get_language(x))
-print("Done detecting language")
 
-print("Translating Spanish tweets")
-# Translate the Spanish tweets to English
-trump_tweets['tweet'] = trump_tweets.apply(
-    lambda row: safe_translate(
-        row['tweet']) if row['language'] == 'es' else row['tweet'],
-    axis=1
-)
-print("Done translating the Trump tweets")
-biden_tweets['tweet'] = biden_tweets.apply(
-    lambda row: safe_translate(
-        row['tweet']) if row['language'] == 'es' else row['tweet'],
-    axis=1
-)
-print("Done translating the tweets")
+# Only save the english tweets
+trump_tweets = trump_tweets[trump_tweets['language'] == 'en']
+biden_tweets = biden_tweets[biden_tweets['language'] == 'en']
 
 # Clean the tweets
 trump_tweets['tweet'] = trump_tweets['tweet'].apply(clean_tweet_data)
