@@ -133,7 +133,7 @@ def main():
 
     average_clustering = average_kmeans_clustering(X)
 
-    # Test for the hypotheses
+    # Test the hypotheses
     silhouette_avg = cluster_distinction_test(X, average_clustering)
     p_value = random_clustering_test(X, cluster_assignments, true_labels)
 
