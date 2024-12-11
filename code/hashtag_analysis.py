@@ -2,7 +2,12 @@
 hashtag_analysis.py
 
 DESCRIPTION:
-
+This script analyses the hashtags used in tweets about the US presidential
+candidates Donald Trump and Joe Biden. It creates a wordcloud of the hashtags
+used in the tweets, filters out hashtags that contain the candidate's name,
+and creates a time series of the most popular hashtags used in the tweets.
+This script also calculates the correlation between the sentiment polarity
+of the tweets and the frequency of the most popular hashtags used.
 """
 
 import pandas as pd  # For data manipulation
@@ -14,19 +19,15 @@ import re  # For regular expressions
 from create_timeseries import weighted_mean
 from sklearn.feature_extraction.text import CountVectorizer
 from scipy.stats import pearsonr
-from scipy.stats import spearmanr
 
 import warnings
 warnings.filterwarnings("ignore")
 
-# Get the tweet data for both candidates
-trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
-biden_tweets = pd.read_csv('../data/tweets/cleaned_hashtag_joebiden.csv')
-
 
 def filter_hashtags(data, candidate):
     """
-    Filter out tweets that do not contain other hashtags than the candidate's name
+    Filter out tweets that do not contain other hashtags than the candidate's
+    name and hashtags that contain the candidate's name.
     """
     # Extract hashtags from the tweet text
     data['hashtags'] = data['tweet'].apply(
@@ -36,11 +37,18 @@ def filter_hashtags(data, candidate):
     data['hashtags'] = data['hashtags'].apply(
         lambda x: [i for i in x if i.lower() != f'#{candidate.lower()}'])
 
+    # Filter out hashtags that contain the candidate's name
+    data.loc[:, 'hashtags'] = data['hashtags'].apply(
+        lambda x: [i for i in x if candidate.lower() not in i.lower()])
+
     # Remove tweets that do not contain any hashtags
     data = data[data['hashtags'].apply(len) > 0]
 
     return data
 
+# Get the tweet data for both candidates
+trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
+biden_tweets = pd.read_csv('../data/tweets/cleaned_hashtag_joebiden.csv')
 
 # Get the dataframes with the filtered tweets
 trump_hashtags = filter_hashtags(trump_tweets, 'Trump')
@@ -65,20 +73,13 @@ def create_wordcloud(data, candidate):
     plt.title(f'Wordcloud of Hashtags for {candidate}')
     plt.show()
 
-
-def filter_candidates(data):
-    """
-    Filter out hashtags that contain the string 'trump' or 'biden'
-    """
-    data.loc[:, 'hashtags'] = data['hashtags'].apply(
-        lambda x: [i for i in x if 'trump' not in i.lower() and 'biden' not in i.lower()])
-
-    return data
+create_wordcloud(trump_hashtags, 'Trump')
+create_wordcloud(biden_hashtags, 'Biden')
 
 
-# Get the dataframes with the filtered tweets
-trump_hashtags = filter_candidates(trump_hashtags)
-biden_hashtags = filter_candidates(biden_hashtags)
+# # Get the dataframes with the filtered tweets
+# trump_hashtags = filter_candidates(trump_hashtags)
+# biden_hashtags = filter_candidates(biden_hashtags)
 
 
 # create_wordcloud(trump_hashtags, 'Trump')
@@ -172,62 +173,67 @@ def create_co_occurence_matrix(data):
     return co_occurence_df
 
 
-# trump_co_occurence_df = create_co_occurence_matrix(trump_hashtags)
-# biden_co_occurence_df = create_co_occurence_matrix(biden_hashtags)
+trump_co_occurence_df = create_co_occurence_matrix(trump_hashtags)
+biden_co_occurence_df = create_co_occurence_matrix(biden_hashtags)
 
-
-def plot_co_occurence(co_occorence_df, candidate):
-    plt.figure(figsize=(25, 5))
-    co_occorence_df.sum(axis=1).sort_values(
-        ascending=False).head(25).plot(kind='bar')
+def plot_co_occurence(co_occurence_df, candidate):
+    plt.figure(figsize=(14, 8))
+    top_25 = co_occurence_df.sum(axis=1).sort_values(ascending=False).head(25)
+    top_25.plot(kind='bar')
     plt.ylabel('Count')
     plt.xlabel('Hashtags')
     plt.title(f'Top 25 Co-occurring Hashtags for {candidate}')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
     plt.show()
 
-
-def pearson_correlation_test(data, window_size):
-    """
-    Calculate the p-value for the correlation between sentiment polarity and hashtag frequency.
-    """
-    # Create time series for sentiment polarity
-    sentiment_intervals = create_time_series_not_per_state(data, window_size)
-
-    # Create time series for hashtag frequency
-    hashtag_time_series = create_hashtag_time_series(data, window_size)
-
-    # Merge the two time series on the date
-    merged_data = pd.merge(
-        pd.DataFrame(sentiment_intervals, columns=[
-                     'sentiment_polarity', 'date']),
-        hashtag_time_series,
-        left_on='date',
-        right_on='created_at',
-        how='inner'
-    )
-
-    # Calculate the correlation and p-value
-    correlation, p_value = pearsonr(
-        merged_data['sentiment_polarity'],
-        merged_data['most_popular_hashtag'].apply(
-            lambda x: data['hashtags'].explode().value_counts().get(x, 0))
-    )
-
-    return correlation, p_value
+plot_co_occurence(trump_co_occurence_df, 'Trump')
+plot_co_occurence(biden_co_occurence_df, 'Biden')
 
 
-_, trump_p_value = pearson_correlation_test(trump_hashtags, '24h')
-_, biden_p_value = pearson_correlation_test(biden_hashtags, '24h')
+# def pearson_correlation_test(data, window_size):
+#     """
+#     Calculate the p-value for the correlation between sentiment polarity
+#     and hashtag frequency.
+#     """
+#     # Create time series for sentiment polarity
+#     sentiment_intervals = create_time_series_not_per_state(data, window_size)
 
-if trump_p_value < 0.05:
-    print("The correlation between sentiment and hashtag frequency for Trump is statistically significant.")
-else:
-    print("The correlation between sentiment and hashtag frequency for Trump is not statistically significant.")
+#     # Create time series for hashtag frequency
+#     hashtag_time_series = create_hashtag_time_series(data, window_size)
 
-if biden_p_value < 0.05:
-    print("The correlation between sentiment and hashtag frequency for Biden is statistically significant.")
-else:
-    print("The correlation between sentiment and hashtag frequency for Biden is not statistically significant.")
+#     # Merge the two time series on the date
+#     merged_data = pd.merge(
+#         pd.DataFrame(sentiment_intervals, columns=[
+#                      'sentiment_polarity', 'date']),
+#         hashtag_time_series,
+#         left_on='date',
+#         right_on='created_at',
+#         how='inner'
+#     )
+
+#     # Calculate the correlation and p-value
+#     correlation, p_value = pearsonr(
+#         merged_data['sentiment_polarity'],
+#         merged_data['most_popular_hashtag'].apply(
+#             lambda x: data['hashtags'].explode().value_counts().get(x, 0))
+#     )
+
+#     return correlation, p_value
+
+
+# _, trump_p_value = pearson_correlation_test(trump_hashtags, '24h')
+# _, biden_p_value = pearson_correlation_test(biden_hashtags, '24h')
+
+# if trump_p_value < 0.05:
+#     print("The correlation between sentiment and hashtag frequency for Trump is statistically significant.")
+# else:
+#     print("The correlation between sentiment and hashtag frequency for Trump is not statistically significant.")
+
+# if biden_p_value < 0.05:
+#     print("The correlation between sentiment and hashtag frequency for Biden is statistically significant.")
+# else:
+#     print("The correlation between sentiment and hashtag frequency for Biden is not statistically significant.")
 
 
 # plot_co_occurence(trump_co_occurence_df, 'Trump')
