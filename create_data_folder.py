@@ -17,7 +17,6 @@
 """
 
 import zipfile
-import pandas as pd
 import requests
 import shutil
 from pathlib import Path
@@ -53,33 +52,18 @@ if __name__ == "__main__":
         parents=True, exist_ok=True)
     Path(__file__).parent.joinpath("data", "tweets").mkdir(
         parents=True, exist_ok=True)
-    Path(__file__).parent.joinpath("data", "covid").mkdir(
-        parents=True, exist_ok=True)
 
     # Define the file names and URLs
     fn_results = Path(__file__).parent / "data" / \
         "election_results" / "election_results.csv"
     fn_tweets = Path(__file__).parent / "data" / "tweets" / "tweets.csv"
-    fn_covid = Path(__file__).parent / "data" / "covid" / "covid.csv"
 
     URL_results = r"https://shorturl.at/Tf8WV"
     URL_tweets = r"https://shorturl.at/sStbw"
-    URL_covid = r"https://shorturl.at/HJBnO"
 
     # Download and extract the data
-    # read_and_extract_data(URL_results, fn_results)
+    read_and_extract_data(URL_results, fn_results)
     print("Downloading tweets. Warning: This may take a minute or two")
-    # read_and_extract_data(URL_tweets, fn_tweets)
-    read_and_extract_data(URL_covid, fn_covid)
-
-    # Filter out a lot of the covid data
-
-    path = Path(__file__).parent / "data" / "covid" / "us-counties.csv"
-    df = pd.read_csv(path)
-
-    # We only want dates between 2020-10-15 and 2020-11-8
-    df['date'] = pd.to_datetime(df['date'])
-    df = df[df['date'].between('2020-10-15', '2020-11-7')]
-    df.to_csv(path, index=False)
+    read_and_extract_data(URL_tweets, fn_tweets)
 
     print("Done!")

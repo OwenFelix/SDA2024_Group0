@@ -8,7 +8,7 @@ hashtag_joebiden.csv files. The preprocessing steps include:
 2. Filtering out tweets that are not from the United States of America
 3. Dropping rows with missing values
 4. Removing tweets that are in both datasets
-5. Detecting the language of the tweets and only keeping the English tweets
+5. Detecting the language of the tweets and only saving the English tweets
 6. Cleaning the tweets
 7. Performing the polarity sentiment analysis on the tweets
 """
@@ -70,7 +70,7 @@ def remove_stopwords(text):
                     text.split() if word not in stop_words)
 
 
-def pre_language_detection_clean(text):
+def pre_langdetect_clean(text):
     """
     This function removes the usernames and URLs from the text data before
     language detection.
@@ -169,8 +169,8 @@ trump_tweets = trump_tweets[~tids.isin(ids_tweets_in_common)]
 biden_tweets = biden_tweets[~bids.isin(ids_tweets_in_common)]
 
 # Apply the pre clean before detecting the language
-trump_tweets['tweet'] = trump_tweets['tweet'].apply(pre_language_detection_clean)
-biden_tweets['tweet'] = biden_tweets['tweet'].apply(pre_language_detection_clean)
+trump_tweets['tweet'] = trump_tweets['tweet'].apply(pre_langdetect_clean)
+biden_tweets['tweet'] = biden_tweets['tweet'].apply(pre_langdetect_clean)
 
 # Detect language for all tweets in the dataset
 trump_tweets['language'] = trump_tweets['tweet'].apply(
