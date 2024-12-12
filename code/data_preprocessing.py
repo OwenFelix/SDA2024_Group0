@@ -23,6 +23,7 @@ from nltk.corpus import wordnet  # For POS tagging
 from nltk.stem import WordNetLemmatizer  # For lemmatizing words
 from textblob import TextBlob  # For sentiment analysis
 import langid  # For language detection
+from pathlib import Path  # For handling file paths
 
 import nltk  # For natural language processing
 nltk.download('stopwords')  # Download the stopwords
@@ -131,69 +132,75 @@ def get_language(text):
         return 'unknown'
 
 
-# Load the datasets
-trump_tweets = read_data("../data/tweets/hashtag_donaldtrump.csv")
-biden_tweets = read_data("../data/tweets/hashtag_joebiden.csv")
+# Check if files are already downloaded
+if (Path(__file__).parent / "data" /
+        "tweets" / "cleaned_hashtag_donaldtrump.csv").exists() and (Path(__file__).parent / "data" /
+                                                                    "tweets" / "cleaned_hashtag_joebiden.csv").exists():
+    print("Data already downloaded")
+else:
+    # Load the datasets
+    trump_tweets = read_data("data/tweets/hashtag_donaldtrump.csv")
+    biden_tweets = read_data("data/tweets/hashtag_joebiden.csv")
 
-# Initialize a list of irrelevant columns
-irrelevant_cols = ['source', 'user_id', 'user_name', 'user_screen_name',
-                   'user_description', 'user_join_date', 'city',
-                   'collected_at']
+    # Initialize a list of irrelevant columns
+    irrelevant_cols = ['source', 'user_id', 'user_name', 'user_screen_name',
+                       'user_description', 'user_join_date', 'city',
+                       'collected_at']
 
-# Drop irrelevant columns from the datasets
-trump_tweets.drop(columns=irrelevant_cols, inplace=True)
-biden_tweets.drop(columns=irrelevant_cols, inplace=True)
+    # Drop irrelevant columns from the datasets
+    trump_tweets.drop(columns=irrelevant_cols, inplace=True)
+    biden_tweets.drop(columns=irrelevant_cols, inplace=True)
 
-# Replace United States with United States of America
-trump_tweets['country'] = trump_tweets['country'].replace(
-    'United States', 'United States of America')
-biden_tweets['country'] = biden_tweets['country'].replace(
-    'United States', 'United States of America')
+    # Replace United States with United States of America
+    trump_tweets['country'] = trump_tweets['country'].replace(
+        'United States', 'United States of America')
+    biden_tweets['country'] = biden_tweets['country'].replace(
+        'United States', 'United States of America')
 
-# Filter out tweets that are not from the United States of America
-trump_tweets = trump_tweets[trump_tweets['country']
-                            == 'United States of America'].copy()
-biden_tweets = biden_tweets[biden_tweets['country']
-                            == 'United States of America'].copy()
+    # Filter out tweets that are not from the United States of America
+    trump_tweets = trump_tweets[trump_tweets['country']
+                                == 'United States of America'].copy()
+    biden_tweets = biden_tweets[biden_tweets['country']
+                                == 'United States of America'].copy()
 
-# Drop all rows with missing values
-biden_tweets.dropna(axis=0, inplace=True)
-trump_tweets.dropna(axis=0, inplace=True)
+    # Drop all rows with missing values
+    biden_tweets.dropna(axis=0, inplace=True)
+    trump_tweets.dropna(axis=0, inplace=True)
 
-# Remove tweets that are in both datasets
-tids = trump_tweets['tweet_id']
-bids = biden_tweets['tweet_id']
-ids_tweets_in_common = set(trump_tweets['tweet_id']).intersection(
-    set(biden_tweets['tweet_id']))
-trump_tweets = trump_tweets[~tids.isin(ids_tweets_in_common)]
-biden_tweets = biden_tweets[~bids.isin(ids_tweets_in_common)]
+    # Remove tweets that are in both datasets
+    tids = trump_tweets['tweet_id']
+    bids = biden_tweets['tweet_id']
+    ids_tweets_in_common = set(trump_tweets['tweet_id']).intersection(
+        set(biden_tweets['tweet_id']))
+    trump_tweets = trump_tweets[~tids.isin(ids_tweets_in_common)]
+    biden_tweets = biden_tweets[~bids.isin(ids_tweets_in_common)]
 
-# Apply the pre clean before detecting the language
-trump_tweets['tweet'] = trump_tweets['tweet'].apply(pre_langdetect_clean)
-biden_tweets['tweet'] = biden_tweets['tweet'].apply(pre_langdetect_clean)
+    # Apply the pre clean before detecting the language
+    trump_tweets['tweet'] = trump_tweets['tweet'].apply(pre_langdetect_clean)
+    biden_tweets['tweet'] = biden_tweets['tweet'].apply(pre_langdetect_clean)
 
-# Detect language for all tweets in the dataset
-trump_tweets['language'] = trump_tweets['tweet'].apply(
-    lambda x: get_language(x))
-biden_tweets['language'] = biden_tweets['tweet'].apply(
-    lambda x: get_language(x))
+    # Detect language for all tweets in the dataset
+    trump_tweets['language'] = trump_tweets['tweet'].apply(
+        lambda x: get_language(x))
+    biden_tweets['language'] = biden_tweets['tweet'].apply(
+        lambda x: get_language(x))
 
-# Only save the english tweets
-trump_tweets = trump_tweets[trump_tweets['language'] == 'en']
-biden_tweets = biden_tweets[biden_tweets['language'] == 'en']
+    # Only save the english tweets
+    trump_tweets = trump_tweets[trump_tweets['language'] == 'en']
+    biden_tweets = biden_tweets[biden_tweets['language'] == 'en']
 
-# Clean the tweets
-trump_tweets['tweet'] = trump_tweets['tweet'].apply(clean_tweet_data)
-biden_tweets['tweet'] = biden_tweets['tweet'].apply(clean_tweet_data)
+    # Clean the tweets
+    trump_tweets['tweet'] = trump_tweets['tweet'].apply(clean_tweet_data)
+    biden_tweets['tweet'] = biden_tweets['tweet'].apply(clean_tweet_data)
 
-# Sentiment analysis of the tweets
-trump_tweets['sentiment_polarity'] = trump_tweets['tweet'].apply(
-    lambda x: TextBlob(x).sentiment.polarity)
-biden_tweets['sentiment_polarity'] = biden_tweets['tweet'].apply(
-    lambda x: TextBlob(x).sentiment.polarity)
+    # Sentiment analysis of the tweets
+    trump_tweets['sentiment_polarity'] = trump_tweets['tweet'].apply(
+        lambda x: TextBlob(x).sentiment.polarity)
+    biden_tweets['sentiment_polarity'] = biden_tweets['tweet'].apply(
+        lambda x: TextBlob(x).sentiment.polarity)
 
-# Save the new datasets to csv
-trump_tweets.to_csv(
-    '../data/tweets/cleaned_hashtag_donaldtrump.csv', index=False)
-biden_tweets.to_csv(
-    '../data/tweets/cleaned_hashtag_joebiden.csv', index=False)
+    # Save the new datasets to csv
+    trump_tweets.to_csv(
+        '../data/tweets/cleaned_hashtag_donaldtrump.csv', index=False)
+    biden_tweets.to_csv(
+        '../data/tweets/cleaned_hashtag_joebiden.csv', index=False)

@@ -1,8 +1,12 @@
 # SDA2024_Group0
 
-You have to install PyQt5 to be able to run the geographical plots. You can install it by running the following command in your terminal:
+This project is part of the course "Scientific Data Analysis" at the University of Amsterdam.
 
-pip install PyQt5
+## Group members
+* Remco Hogerwerf
+* Mabel Traube
+* Owen Poort 
+* Annabelle Donato
 
 ## Project description
 lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec elit
@@ -10,7 +14,15 @@ nec nunc ultricies ultricies.
 
 ## How to use
 1. Clone the repository
-2. Run the `create_data_folder.py` script to create the data folder containing the necessary data files
+2. Use the `startup.py` to create and process the data. Run the following command in the terminal if you want to download the cleaned data directly:
+```bash 
+python3 startup.py False
+```
+Run the following command if you want to download the raw data and clean it yourself (takes about 15 - 20 minutes):
+```bash
+python3 startup.py True
+``` 
+
 3. To be continued...
 
 ## Dependencies
@@ -22,3 +34,5 @@ nec nunc ultricies ultricies.
 * pathlib
 * requests
 * zipfile
+* PyQt5
+

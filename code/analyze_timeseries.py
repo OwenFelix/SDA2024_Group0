@@ -30,7 +30,6 @@ def dtw_cumdiff(sentiment1, sentiment2):
     Calculate the cumulative difference between two timeseries
     using Dynamic Time Warping (DTW).
     """
-    print(len(sentiment1), len(sentiment2))
     # Step 1: Apply DTW to the two time series
     _, path = fastdtw.fastdtw(sentiment1, sentiment2)
 
@@ -113,14 +112,13 @@ def cumdiff_regression(sentiment1, sentiment2):
 
 
 # Load in the timeseries data
-with open('../data/timeseries.pkl', 'rb') as f:
+with open('tmp/timeseries.pkl', 'rb') as f:
     timeseries = pickle.load(f)
 
 # Extract features from the timeseries
 features = dict()
 
 for state in timeseries.keys():
-    print(f'Extracting features for {state}...')
     """
     Extract features from the timeseries for each state.
     The following features will be extracted of the two timeseries per state:
@@ -186,5 +184,5 @@ for state in timeseries.keys():
 
 
 # Save the features to a pickle file
-with open('../data/features.pkl', 'wb') as f:
+with open('tmp/features.pkl', 'wb') as f:
     pickle.dump(features, f)
