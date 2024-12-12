@@ -75,8 +75,8 @@ def prepare_state_data(trump_data, biden_data, state_code, trump_weights, biden_
     combined_data.columns = ['trump_sentiment', 'biden_sentiment']
     return combined_data
 
-# Perform VAR analysis with confidence intervals
-def perform_var_analysis_with_confidence_intervals(state_data, confidence=0.95):
+# Perform VAR analysis with stationarity
+def perform_var_analysis_with_stationarity(state_data, confidence=0.95):
     model = VAR(state_data)
     results = model.fit(maxlags=1)
 
@@ -155,7 +155,7 @@ def analyze_all_states_with_dynamic_weights(trump_data, biden_data, voting_resul
     for state_code in voting_results['state_abr']:
         try:
             state_data = prepare_state_data(trump_data, biden_data, state_code, trump_weights, biden_weights)
-            var_results, ci_summary = perform_var_analysis_with_confidence_intervals(state_data)
+            var_results, ci_summary = perform_var_analysis_with_stationarity(state_data)
             visualize_sentiment_with_spikes(state_code, state_data, voting_results, var_results, ci_summary, trump_data, biden_data)
         except Exception as e:
             print(f"Error processing {state_code}: {e}")
