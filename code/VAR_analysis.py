@@ -1,118 +1,173 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-from statsmodels.tsa.api import VAR
-import pickle
 import numpy as np
+import matplotlib.pyplot as plt
 import re
+from statsmodels.tsa.api import VAR
 
-# Function to sanitize hashtags
-def sanitize_hashtags(hashtags):
-    sanitized = [re.sub(r'[^\w#]', '', tag) for tag in hashtags]
-    return [tag for tag in sanitized if tag]  # Remove empty strings
+# Extract hashtags from tweet text
+def extract_hashtags(tweet):
+    return re.findall(r"#\w+", str(tweet).lower())
 
-# Function to annotate spikes with hashtags
-def annotate_spikes_with_hashtags(state_data, hashtags, sentiment_column, color, label):
-    spike_indices = state_data[sentiment_column].nlargest(3).index  # Get top 3 spikes
-    for i, idx in enumerate(spike_indices):
-        if idx in state_data.index:
-            plt.scatter(idx, state_data.loc[idx, sentiment_column], color=color, label=label if i == 0 else "")
-            if hashtags:
-                plt.annotate(
-                    hashtags[i % len(hashtags)],
-                    (idx, state_data.loc[idx, sentiment_column]),
-                    textcoords="offset points",
-                    xytext=(-50, 10),
-                    arrowprops=dict(arrowstyle='->', color=color)
-                )
+# Identify dominant hashtags dynamically
+def identify_dominant_hashtags(data, top_n=10):
+    hashtag_sentiments = {}
+    hashtag_counts = {}
 
-# Function to prepare time series
-def prepare_time_series(data, state_code, time_interval='24h'):
-    state_data = data[data['state_code'] == state_code].copy()
-    state_data.loc[:, 'created_at'] = pd.to_datetime(state_data['created_at'], errors='coerce')
-    state_data = state_data.dropna(subset=['created_at'])
-    state_data = state_data.set_index('created_at')
-    state_data = state_data.sort_index()
-    time_series = state_data['sentiment_polarity'].resample(time_interval).mean().dropna()
-    return time_series
+    for _, row in data.iterrows():
+        hashtags = extract_hashtags(row['tweet'])
+        try:
+            sentiment = float(row['sentiment_polarity'])  # Ensure sentiment is numeric
+        except ValueError:
+            continue  # Skip if sentiment is not a valid number
+        for tag in hashtags:
+            if tag not in hashtag_sentiments:
+                hashtag_sentiments[tag] = []
+                hashtag_counts[tag] = 0
+            hashtag_sentiments[tag].append(sentiment)
+            hashtag_counts[tag] += 1
 
-# Function to prepare state data
-def prepare_state_data(trump_data, biden_data, state_code, time_interval='24h'):
-    trump_series = prepare_time_series(trump_data, state_code, time_interval)
-    biden_series = prepare_time_series(biden_data, state_code, time_interval)
+    # Compute average sentiment and frequency for each hashtag
+    hashtag_summary = {
+        tag: {
+            "average_sentiment": np.mean(sentiments) if len(sentiments) > 0 else 0.0,
+            "frequency": hashtag_counts[tag]
+        }
+        for tag, sentiments in hashtag_sentiments.items()
+    }
+
+    # Sort by frequency
+    dominant_hashtags = sorted(
+        hashtag_summary.items(),
+        key=lambda x: x[1]['frequency'],
+        reverse=True
+    )
+    return dominant_hashtags[:top_n]
+
+# Compute weighted sentiment score using dynamic weights
+def compute_weighted_sentiment_dynamic(tweet, sentiment_score, hashtag_weights):
+    hashtags = extract_hashtags(tweet)
+    weights = [hashtag_weights.get(tag, 0) for tag in hashtags]
+    if any(weights):
+        weighted_mean = np.average([sentiment_score] * len(weights), weights=weights)
+        return weighted_mean
+    return sentiment_score  # Fallback to raw sentiment score
+
+# Prepare weighted time series for a state
+def prepare_weighted_time_series(data, state_code, hashtag_weights, time_interval='24h'):
+    try:
+        state_data = data[data['state_code'] == state_code].copy()
+        state_data['created_at'] = pd.to_datetime(state_data['created_at'], errors='coerce')
+        state_data.dropna(subset=['created_at'], inplace=True)
+        state_data.set_index('created_at', inplace=True)
+        state_data['weighted_sentiment'] = state_data.apply(
+            lambda row: compute_weighted_sentiment_dynamic(row['tweet'], row['sentiment_polarity'], hashtag_weights), axis=1
+        )
+        return state_data['weighted_sentiment'].resample(time_interval).mean().dropna()
+    except Exception as e:
+        print(f"Error processing time series for state {state_code}: {e}")
+        return pd.Series()
+
+# Combine Trump and Biden data for a state
+def prepare_state_data(trump_data, biden_data, state_code, trump_weights, biden_weights, time_interval='24h'):
+    trump_series = prepare_weighted_time_series(trump_data, state_code, trump_weights, time_interval)
+    biden_series = prepare_weighted_time_series(biden_data, state_code, biden_weights, time_interval)
     combined_data = pd.concat([trump_series, biden_series], axis=1)
     combined_data.columns = ['trump_sentiment', 'biden_sentiment']
     return combined_data
 
-# Visualize sentiment with election results
-def visualize_sentiment_with_election_results(state_code, state_data, forecast_df, election_date, trump_percentage, biden_percentage, trump_hashtags, biden_hashtags):
-    plt.figure(figsize=(14, 8))  # Increased figure size
+# Perform VAR analysis with confidence intervals
+def perform_var_analysis_with_confidence_intervals(state_data, confidence=0.95):
+    model = VAR(state_data)
+    results = model.fit(maxlags=1)
 
-    # Plot observed and forecasted sentiments
+    coefficients = results.params
+    stderr = results.stderr
+    z_score = 1.96  # For 95% confidence interval
+
+    lower_bound = coefficients - z_score * stderr
+    upper_bound = coefficients + z_score * stderr
+
+    ci_summary = f"Confidence Intervals ({confidence * 100}%):\n"
+    for col in coefficients.columns:
+        ci_summary += f"{col}:\n"
+        for idx in coefficients.index:
+            coef = coefficients.loc[idx, col]
+            lb = lower_bound.loc[idx, col]
+            ub = upper_bound.loc[idx, col]
+            ci_summary += f"  {idx}: Coefficient={coef:.4f}, CI=({lb:.4f}, {ub:.4f})\n"
+
+    return results, ci_summary
+
+# Visualize sentiment with confidence intervals and spike annotations
+def visualize_sentiment_with_spikes(state_code, state_data, voting_results, var_results, ci_summary, trump_data, biden_data):
+    plt.figure(figsize=(14, 8))
     plt.plot(state_data.index, state_data['trump_sentiment'], label='Trump Sentiment', color='red')
     plt.plot(state_data.index, state_data['biden_sentiment'], label='Biden Sentiment', color='blue')
-    if forecast_df is not None:
-        forecast_df = forecast_df[forecast_df.index <= election_date]  # Limit to pre-election
-        plt.plot(forecast_df.index, forecast_df['trump_sentiment'], label='Forecasted Trump Sentiment', linestyle='--', color='red')
-        plt.plot(forecast_df.index, forecast_df['biden_sentiment'], label='Forecasted Biden Sentiment', linestyle='--', color='blue')
-
-    # Annotate spikes with hashtags
-    annotate_spikes_with_hashtags(state_data, trump_hashtags, 'trump_sentiment', 'red', 'Trump Peaks')
-    annotate_spikes_with_hashtags(state_data, biden_hashtags, 'biden_sentiment', 'blue', 'Biden Peaks')
-
-    # Mark the election date
-    plt.axvline(x=election_date, color='orange', linestyle=':', label='Election Date')
-    plt.text(election_date, 0.1, f"Trump: {trump_percentage}%\nBiden: {biden_percentage}%", color='orange', fontsize=10, ha='center')
-
     plt.axhline(0, color='black', linestyle='--', linewidth=0.8)
+
+    # Election date and results
+    election_date = pd.to_datetime('2020-11-03')
+    plt.axvline(x=election_date, color='orange', linestyle='--', label='Election Date')
+    state_results = voting_results[voting_results['state_abr'] == state_code]
+    trump_pct = state_results['trump_pct'].values[0]
+    biden_pct = state_results['biden_pct'].values[0]
+    plt.text(election_date, 0.15, f"Trump: {trump_pct}%\nBiden: {biden_pct}%", color='purple', fontsize=10)
+
+    # Mark spikes and annotate with hashtags
+    for col, color, tweet_data in zip(['trump_sentiment', 'biden_sentiment'], ['red', 'blue'], [trump_data, biden_data]):
+        sentiment_diff = state_data[col].diff().fillna(0)
+        spikes = sentiment_diff[sentiment_diff.abs() > 0.1]  # Threshold for spikes
+        for idx in spikes.index:
+            plt.scatter(idx, state_data[col][idx], color=color, s=50)
+            
+            # Find matching tweets
+            matching_tweets = tweet_data[tweet_data['created_at'].dt.floor('D') == idx.floor('D')]
+            if not matching_tweets.empty:
+                hashtags = extract_hashtags(matching_tweets.iloc[0]['tweet'])
+                
+                # Format hashtags horizontally
+                formatted_hashtags = ' '.join(hashtags[:2])
+                
+                # Ensure hashtags remain inside the plot
+                y_min, y_max = plt.ylim()
+                y_position = np.clip(state_data[col][idx] + 0.05, y_min, y_max)
+                
+                # Annotate hashtags
+                plt.text(idx, y_position, formatted_hashtags, fontsize=8, color='black', ha='center', rotation=0)
+
+    # Title and labels
+    plt.title(f'Sentiment Analysis with Confidence Intervals and Spikes for {state_code}')
     plt.xlabel('Date')
-    plt.ylabel('Sentiment Polarity')
-    plt.title(f'Sentiment Analysis and Election Results for {state_code}')
+    plt.ylabel('Weighted Sentiment Polarity')
     plt.legend()
-    plt.tight_layout()  # Adjust layout for better visualization
+    plt.tight_layout()
+
+    # Add figure caption for correlation matrix and CI
+    caption = f"Correlation matrix of residuals:\n{var_results.resid_corr}\n\n{ci_summary}"
+    plt.figtext(0.5, -0.3, caption, wrap=True, horizontalalignment='center', fontsize=10)
     plt.show()
 
-# Main function to analyze state sentiment
-def analyze_state_sentiment(trump_data, biden_data, voting_data, time_interval='24h', forecast_steps=7):
-    state_results = []
-    for state_code in voting_data['state_abr']:
+# Analyze all states with dynamic hashtag weights and visualization
+def analyze_all_states_with_dynamic_weights(trump_data, biden_data, voting_results):
+    trump_weights = {tag: sentiment['average_sentiment'] for tag, sentiment in identify_dominant_hashtags(trump_data)}
+    biden_weights = {tag: sentiment['average_sentiment'] for tag, sentiment in identify_dominant_hashtags(biden_data)}
+
+    for state_code in voting_results['state_abr']:
         try:
-            state_data = prepare_state_data(trump_data, biden_data, state_code, time_interval)
-            if state_data.empty or len(state_data) < 5:
-                continue
-
-            model = VAR(state_data)
-            results = model.fit(ic='aic')
-            if results.k_ar == 0:
-                continue
-
-            forecast = results.forecast(state_data.values[-results.k_ar:], steps=forecast_steps)
-            forecast_dates = pd.date_range(state_data.index[-1] + pd.Timedelta(days=1), periods=forecast_steps)
-            forecast_df = pd.DataFrame(forecast, index=forecast_dates, columns=['trump_sentiment', 'biden_sentiment'])
-
-            trump_hashtags = trump_data[trump_data['state_code'] == state_code]['hashtags'].explode().value_counts().index.tolist()[:3]
-            biden_hashtags = biden_data[biden_data['state_code'] == state_code]['hashtags'].explode().value_counts().index.tolist()[:3]
-
-            election_result = voting_data[voting_data['state_abr'] == state_code]
-            trump_percentage = election_result['trump_pct'].values[0]
-            biden_percentage = election_result['biden_pct'].values[0]
-            election_date = pd.to_datetime('2020-11-03')
-
-            visualize_sentiment_with_election_results(state_code, state_data, forecast_df, election_date, trump_percentage, biden_percentage, trump_hashtags, biden_hashtags)
-            state_results.append({
-                'state_code': state_code,
-                'observed_data': state_data,
-                'forecast_data': forecast_df,
-                'model_results': results
-            })
+            state_data = prepare_state_data(trump_data, biden_data, state_code, trump_weights, biden_weights)
+            var_results, ci_summary = perform_var_analysis_with_confidence_intervals(state_data)
+            visualize_sentiment_with_spikes(state_code, state_data, voting_results, var_results, ci_summary, trump_data, biden_data)
         except Exception as e:
             print(f"Error processing {state_code}: {e}")
-    with open('./data/analysis_results.pkl', 'wb') as f:
-        pickle.dump(state_results, f)
 
 # Load datasets
 trump_tweets = pd.read_csv('./data/tweets/cleaned_hashtag_donaldtrump.csv')
 biden_tweets = pd.read_csv('./data/tweets/cleaned_hashtag_joebiden.csv')
 voting_results = pd.read_csv('./data/election_results/cleaned_voting.csv')
 
-# Execute the analysis
-analyze_state_sentiment(trump_tweets, biden_tweets, voting_results)
+# Convert 'created_at' to datetime
+trump_tweets['created_at'] = pd.to_datetime(trump_tweets['created_at'], errors='coerce')
+biden_tweets['created_at'] = pd.to_datetime(biden_tweets['created_at'], errors='coerce')
+
+# Analyze all states
+analyze_all_states_with_dynamic_weights(trump_tweets, biden_tweets, voting_results)
