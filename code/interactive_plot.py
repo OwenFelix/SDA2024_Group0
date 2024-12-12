@@ -24,8 +24,15 @@ def process_sentiment_data(data, states, candidate):
                  Timestamp(2020, 10, 17), Timestamp(2020, 10, 18),
                  Timestamp(2020, 10, 19), Timestamp(2020, 10, 20),
                  Timestamp(2020, 10, 21), Timestamp(2020, 10, 22),
-                 Timestamp(2020, 10, 23), Timestamp(2020, 10, 24), Timestamp(2020, 10, 25), Timestamp(2020, 10, 26), Timestamp(
-        2020, 10, 27), Timestamp(2020, 10, 28), Timestamp(2020, 10, 29), Timestamp(2020, 10, 30), Timestamp(2020, 10, 31), Timestamp(2020, 11, 1), Timestamp(2020, 11, 2), Timestamp(2020, 11, 3), Timestamp(2020, 11, 4), Timestamp(2020, 11, 5), Timestamp(2020, 11, 6), Timestamp(2020, 11, 7), Timestamp(2020, 11, 8)]
+                 Timestamp(2020, 10, 23), Timestamp(2020, 10, 24),
+                 Timestamp(2020, 10, 25), Timestamp(2020, 10, 26),
+                 Timestamp(2020, 10, 27), Timestamp(2020, 10, 28),
+                 Timestamp(2020, 10, 29), Timestamp(2020, 10, 30),
+                 Timestamp(2020, 10, 31), Timestamp(2020, 11, 1),
+                 Timestamp(2020, 11, 2), Timestamp(2020, 11, 3),
+                 Timestamp(2020, 11, 4), Timestamp(2020, 11, 5),
+                 Timestamp(2020, 11, 6), Timestamp(2020, 11, 7),
+                 Timestamp(2020, 11, 8)]
     all_dates = [x.date() for x in all_dates]
 
     # Loop over each state and store the sentiment scores and mean for each day

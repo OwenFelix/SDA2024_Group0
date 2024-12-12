@@ -101,16 +101,16 @@ if __name__ == "main":
 
     # Convert forecast to DataFrame
     forecast_df = pd.DataFrame(forecast, index=forecast_index, columns=[
-                            'Trump_Forecast', 'Biden_Forecast'])
+        'Trump_Forecast', 'Biden_Forecast'])
 
     # Plot the forecasts
     plt.figure(figsize=(12, 6))
     plt.plot(trump_sentiment_diff, label='Trump (Differenced)', color='blue')
     plt.plot(biden_sentiment_diff, label='Biden (Differenced)', color='red')
     plt.plot(forecast_df['Trump_Forecast'],
-            label='Trump Forecast', linestyle='dashed', color='blue')
+             label='Trump Forecast', linestyle='dashed', color='blue')
     plt.plot(forecast_df['Biden_Forecast'],
-            label='Biden Forecast', linestyle='dashed', color='red')
+             label='Biden Forecast', linestyle='dashed', color='red')
     plt.legend()
     plt.title('Sentiment Polarity and Forecast')
     plt.xlabel('Date')

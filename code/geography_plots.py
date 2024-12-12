@@ -13,7 +13,6 @@ from shapely.geometry import MultiPolygon
 from shapely import affinity
 import matplotlib.colors as mcolors
 from matplotlib.widgets import Slider
-import plotly.express as px
 
 
 def fix_alaska(alaska_geom, scale, threshold=1e10):

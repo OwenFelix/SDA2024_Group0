@@ -127,7 +127,7 @@ def get_language(text):
     """
     try:
         return langid.classify(text)[0]
-    except:
+    except Exception as _:
         return 'unknown'
 
 
