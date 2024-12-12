@@ -1,6 +1,7 @@
 """
-HEADER
-TODO : FILL WITH DESCRIPTION OF CONTENT OF FILE
+interactive_plot.py
+
+DESCRIPTION:
 """
 
 import numpy as np
@@ -12,13 +13,18 @@ from pandas import Timestamp
 
 def process_sentiment_data(data, states, candidate):
     """
-    Process the sentiment data to create a DataFrame with the sentiment of each state for each candidate over time.
+    Process the sentiment data to create a DataFrame with the sentiment of
+    each state for each candidate over time.
     """
     state_codes = states['STUSPS'].tolist()
     all_states_mean = {}
 
     # Might find another way to do this, but it works for now
-    all_dates = [Timestamp(2020, 10, 15), Timestamp(2020, 10, 16), Timestamp(2020, 10, 17), Timestamp(2020, 10, 18), Timestamp(2020, 10, 19), Timestamp(2020, 10, 20), Timestamp(2020, 10, 21), Timestamp(2020, 10, 22), Timestamp(2020, 10, 23), Timestamp(2020, 10, 24), Timestamp(2020, 10, 25), Timestamp(2020, 10, 26), Timestamp(
+    all_dates = [Timestamp(2020, 10, 15), Timestamp(2020, 10, 16),
+                 Timestamp(2020, 10, 17), Timestamp(2020, 10, 18),
+                 Timestamp(2020, 10, 19), Timestamp(2020, 10, 20),
+                 Timestamp(2020, 10, 21), Timestamp(2020, 10, 22),
+                 Timestamp(2020, 10, 23), Timestamp(2020, 10, 24), Timestamp(2020, 10, 25), Timestamp(2020, 10, 26), Timestamp(
         2020, 10, 27), Timestamp(2020, 10, 28), Timestamp(2020, 10, 29), Timestamp(2020, 10, 30), Timestamp(2020, 10, 31), Timestamp(2020, 11, 1), Timestamp(2020, 11, 2), Timestamp(2020, 11, 3), Timestamp(2020, 11, 4), Timestamp(2020, 11, 5), Timestamp(2020, 11, 6), Timestamp(2020, 11, 7), Timestamp(2020, 11, 8)]
     all_dates = [x.date() for x in all_dates]
 

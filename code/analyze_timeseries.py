@@ -1,3 +1,9 @@
+"""
+analyze_timeseries.py
+
+DESCRIPTION:
+"""
+
 import numpy as np  # For numerical operations
 import pickle  # For loading the model
 import fastdtw  # For Dynamic Time Warping

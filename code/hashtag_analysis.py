@@ -18,7 +18,7 @@ import re  # For regular expressions
 # For calculating weighted mean of sentiment polarity
 from create_timeseries import weighted_mean
 from sklearn.feature_extraction.text import CountVectorizer
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr  # For calculating correlation
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -46,14 +46,6 @@ def filter_hashtags(data, candidate):
 
     return data
 
-# Get the tweet data for both candidates
-trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
-biden_tweets = pd.read_csv('../data/tweets/cleaned_hashtag_joebiden.csv')
-
-# Get the dataframes with the filtered tweets
-trump_hashtags = filter_hashtags(trump_tweets, 'Trump')
-biden_hashtags = filter_hashtags(biden_tweets, 'Biden')
-
 
 def create_wordcloud(data, candidate):
     """
@@ -73,17 +65,6 @@ def create_wordcloud(data, candidate):
     plt.title(f'Wordcloud of Hashtags for {candidate}')
     plt.show()
 
-create_wordcloud(trump_hashtags, 'Trump')
-create_wordcloud(biden_hashtags, 'Biden')
-
-
-# # Get the dataframes with the filtered tweets
-# trump_hashtags = filter_candidates(trump_hashtags)
-# biden_hashtags = filter_candidates(biden_hashtags)
-
-
-# create_wordcloud(trump_hashtags, 'Trump')
-# create_wordcloud(biden_hashtags, 'Biden')
 
 def create_time_series_not_per_state(data, window_size):
     # Convert the 'created_at' column to datetime and set it as the index
@@ -173,9 +154,6 @@ def create_co_occurence_matrix(data):
     return co_occurence_df
 
 
-trump_co_occurence_df = create_co_occurence_matrix(trump_hashtags)
-biden_co_occurence_df = create_co_occurence_matrix(biden_hashtags)
-
 def plot_co_occurence(co_occurence_df, candidate):
     plt.figure(figsize=(14, 8))
     top_25 = co_occurence_df.sum(axis=1).sort_values(ascending=False).head(25)
@@ -186,9 +164,6 @@ def plot_co_occurence(co_occurence_df, candidate):
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     plt.show()
-
-plot_co_occurence(trump_co_occurence_df, 'Trump')
-plot_co_occurence(biden_co_occurence_df, 'Biden')
 
 
 # def pearson_correlation_test(data, window_size):
@@ -220,6 +195,25 @@ plot_co_occurence(biden_co_occurence_df, 'Biden')
 #     )
 
 #     return correlation, p_value
+
+
+# Get the tweet data for both candidates
+trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
+biden_tweets = pd.read_csv('../data/tweets/cleaned_hashtag_joebiden.csv')
+
+# Get the dataframes with the filtered tweets
+trump_hashtags = filter_hashtags(trump_tweets, 'Trump')
+biden_hashtags = filter_hashtags(biden_tweets, 'Biden')
+
+
+create_wordcloud(trump_hashtags, 'Trump')
+create_wordcloud(biden_hashtags, 'Biden')
+
+trump_co_occurence_df = create_co_occurence_matrix(trump_hashtags)
+biden_co_occurence_df = create_co_occurence_matrix(biden_hashtags)
+
+plot_co_occurence(trump_co_occurence_df, 'Trump')
+plot_co_occurence(biden_co_occurence_df, 'Biden')
 
 
 # _, trump_p_value = pearson_correlation_test(trump_hashtags, '24h')

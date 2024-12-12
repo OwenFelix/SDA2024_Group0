@@ -99,22 +99,24 @@ def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
     plt.show()
 
 
-# Load the biden dataset
-biden_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_joebiden.csv")
-trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
+if __name__ == "__main__":
+    # Load the biden dataset
+    biden_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_joebiden.csv")
+    trump_tweets = pd.read_csv(
+        "../data/tweets/cleaned_hashtag_donaldtrump.csv")
 
-# Get the states codes
-voting_results = pd.read_csv('../data/election_results/voting.csv')
-state_codes = voting_results['state_abr'].tolist()
+    # Get the states codes
+    voting_results = pd.read_csv('../data/election_results/voting.csv')
+    state_codes = voting_results['state_abr'].tolist()
 
-# Create time series data for each state
-timeseries = {}
-for state in state_codes:
-    _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
-    _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
-    timeseries[state] = {'biden': biden_tuples,
-                         'trump': trump_tuples}
+    # Create time series data for each state
+    timeseries = {}
+    for state in state_codes:
+        _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
+        _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
+        timeseries[state] = {'biden': biden_tuples,
+                             'trump': trump_tuples}
 
-# Save the timeseries data
-with open('../data/timeseries.pkl', 'wb') as f:
-    pickle.dump(timeseries, f)
+    # Save the timeseries data
+    with open('../data/timeseries.pkl', 'wb') as f:
+        pickle.dump(timeseries, f)

@@ -1,3 +1,9 @@
+"""
+timeseries_dtwclustering.py
+
+DESCRIPTION:
+"""
+
 import numpy as np  # For numerical operations
 import pickle  # For loading the model
 import tslearn.metrics  # For time series analysis
