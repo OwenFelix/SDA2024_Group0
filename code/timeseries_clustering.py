@@ -2,6 +2,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from scipy.stats import permutation_test
 
@@ -48,7 +49,8 @@ def prepare_features(timeseries_features, blue_states, red_states):
     X = np.array([list(timeseries_features[state].values())
                  for state in blue_states + red_states])
     X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-    return X
+    pca = PCA()
+    return pca.fit_transform(X)
 
 
 def perform_clustering(X, n_clusters=2, random_state=567):
@@ -78,7 +80,7 @@ def average_kmeans_clustering(X, n_iter=100):
 
     # Perform clustering n_iter times
     for i in range(n_iter):
-        cluster_assignments[i], _ = perform_clustering(X, random_state=i)
+        cluster_assignments[i], _ = perform_clustering(X, random_state=i * 10)
     mean_clustering = np.mean(cluster_assignments, axis=0)
 
     #  Clamp each element to 0 or 1
@@ -103,17 +105,29 @@ def random_clustering_test(X, cluster_assignments, true_labels,
 
 
 def plot_clusters(X, cluster_assignments, true_labels):
+    # Create a custom legend
+    legend_labels = ['Biden', 'Trump']
+    legend_handles = [plt.Line2D([0], [0], marker='o',
+                                 color='w', markerfacecolor='blue',
+                                 markersize=10),
+                      plt.Line2D([0], [0], marker='o', color='w',
+                                 markerfacecolor='red', markersize=10)]
+    # Plot for KMeans Clustering
     plt.subplot(1, 2, 1)
-    plt.scatter(X[:, 0], X[:, 1], c=cluster_assignments, cmap='coolwarm')
+    plt.scatter(X[:, 0], X[:, 1], c=cluster_assignments, cmap='coolwarm',
+                label='Clusters')
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')
     plt.title('KMeans Clustering of Blue and Red States')
+    plt.legend(legend_handles, legend_labels)
 
     plt.subplot(1, 2, 2)
-    plt.scatter(X[:, 0], X[:, 1], c=true_labels, cmap='coolwarm')
+    plt.scatter(X[:, 0], X[:, 1], c=true_labels, cmap='coolwarm',
+                label='True Labels')
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')
     plt.title('True Labels of Blue and Red States')
+    plt.legend(legend_handles, legend_labels)
     plt.show()
 
 
@@ -127,18 +141,19 @@ def main():
     for state, cluster in zip(blue_states + red_states, cluster_assignments):
         print(f'{state}: {cluster}')
 
-    accuracy, true_labels = calculate_accuracy(
-        cluster_assignments, blue_states, red_states)
-    print(f'Accuracy: {accuracy}')
-
     average_clustering = average_kmeans_clustering(X)
+    accuracy, true_labels = calculate_accuracy(
+        average_clustering, blue_states, red_states)
+    print(f'Accuracy: {accuracy}')
 
     # Test the hypotheses
     silhouette_avg = cluster_distinction_test(X, average_clustering)
-    p_value = random_clustering_test(X, cluster_assignments, true_labels)
+    p_value = random_clustering_test(X, average_clustering, true_labels)
+    print(f'Silhouette Score: {silhouette_avg}')
+    print(f'P-value: {p_value}')
 
     # Plot Clusters
-    plot_clusters(X, cluster_assignments, true_labels)
+    plot_clusters(X, average_clustering, true_labels)
 
     if silhouette_avg > 0.5:
         print('Reject the null hypothesis that'
