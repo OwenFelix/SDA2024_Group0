@@ -2,5 +2,5 @@ data/covid
 data/election_results
 data/tweets
 __pycache__/
-tmp/cleaned_hashtag_donald_trump.csv
-tmp/cleaned_hashtag_joe_biden.csv
+tmp/cleaned_hashtag_donaldtrump.csv
+tmp/cleaned_hashtag_joebiden.csv
