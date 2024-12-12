@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from statsmodels.tsa.api import VAR
-from create_timeseries import weighted_mean
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -46,7 +45,8 @@ def identify_dominant_hashtags(data, top_n=10):
     # Compute average sentiment and frequency for each hashtag
     hashtag_summary = {
         tag: {
-            "average_sentiment": np.mean(sentiments) if len(sentiments) > 0 else 0.0,
+            "average_sentiment": np.mean(sentiments) if len(sentiments) > 0
+            else 0.0,
             "frequency": hashtag_counts[tag]
         }
         for tag, sentiments in hashtag_sentiments.items()
@@ -63,7 +63,8 @@ def identify_dominant_hashtags(data, top_n=10):
 # Compute weighted sentiment score using dynamic weights
 
 
-def compute_weighted_sentiment_dynamic(tweet, sentiment_score, hashtag_weights):
+def compute_weighted_sentiment_dynamic(tweet, sentiment_score,
+                                       hashtag_weights):
     hashtags = extract_hashtags(tweet)
     weights = [hashtag_weights.get(tag, 0) for tag in hashtags]
     if any(weights):
@@ -75,7 +76,8 @@ def compute_weighted_sentiment_dynamic(tweet, sentiment_score, hashtag_weights):
 # Prepare weighted time series for a state
 
 
-def prepare_weighted_time_series(data, state_code, hashtag_weights, time_interval='24h'):
+def prepare_weighted_time_series(data, state_code, hashtag_weights,
+                                 time_interval='24h'):
     try:
         state_data = data[data['state_code'] == state_code].copy()
         state_data['created_at'] = pd.to_datetime(
@@ -83,10 +85,11 @@ def prepare_weighted_time_series(data, state_code, hashtag_weights, time_interva
         state_data.dropna(subset=['created_at'], inplace=True)
         state_data.set_index('created_at', inplace=True)
         state_data['weighted_sentiment'] = state_data.apply(
-            lambda row: compute_weighted_sentiment_dynamic(row['tweet'],
-                                                           row['sentiment_polarity'], hashtag_weights), axis=1
-        )
-        return state_data['weighted_sentiment'].resample(time_interval).mean().dropna()
+            lambda row: compute_weighted_sentiment_dynamic(
+                row['tweet'], row['sentiment_polarity'],
+                hashtag_weights), axis=1)
+        return state_data['weighted_sentiment'].resample(
+            time_interval).mean().dropna()
     except Exception as e:
         print(f"Error processing time series for state {state_code}: {e}")
         return pd.Series()
@@ -94,7 +97,8 @@ def prepare_weighted_time_series(data, state_code, hashtag_weights, time_interva
 # Combine Trump and Biden data for a state
 
 
-def prepare_state_data(trump_data, biden_data, state_code, trump_weights, biden_weights, time_interval='24h'):
+def prepare_state_data(trump_data, biden_data, state_code, trump_weights,
+                       biden_weights, time_interval='24h'):
     trump_series = prepare_weighted_time_series(
         trump_data, state_code, trump_weights, time_interval)
     biden_series = prepare_weighted_time_series(
@@ -124,19 +128,22 @@ def perform_var_analysis_with_stationarity(state_data, confidence=0.95):
             coef = coefficients.loc[idx, col]
             lb = lower_bound.loc[idx, col]
             ub = upper_bound.loc[idx, col]
-            ci_summary += f"  {idx}: Coefficient={coef:.4f}, CI=({lb:.4f}, {ub:.4f})\n"
+            ci_summary += f"  {idx}: \
+Coefficient={coef:.4f}, CI=({lb:.4f}, {ub:.4f})\n"
 
     return results, ci_summary
 
 # Visualize sentiment with confidence intervals and spike annotations
 
 
-def visualize_sentiment_with_spikes(state_code, state_data, voting_results, var_results, ci_summary, trump_data, biden_data):
+def visualize_sentiment_with_spikes(state_code, state_data, voting_results,
+                                    var_results, ci_summary, trump_data,
+                                    biden_data):
     plt.figure(figsize=(14, 8))
-    plt.plot(state_data.index,
-             state_data['trump_sentiment'], label='Trump Sentiment', color='red')
-    plt.plot(state_data.index,
-             state_data['biden_sentiment'], label='Biden Sentiment', color='blue')
+    plt.plot(state_data.index, state_data['trump_sentiment'],
+             label='Trump Sentiment', color='red')
+    plt.plot(state_data.index, state_data['biden_sentiment'],
+             label='Biden Sentiment', color='blue')
     plt.axhline(0, color='black', linestyle='--', linewidth=0.8)
 
     # Election date and results
@@ -146,11 +153,13 @@ def visualize_sentiment_with_spikes(state_code, state_data, voting_results, var_
     state_results = voting_results[voting_results['state_abr'] == state_code]
     trump_pct = state_results['trump_pct'].values[0]
     biden_pct = state_results['biden_pct'].values[0]
-    plt.text(election_date, 0.15,
-             f"Trump: {trump_pct}%\nBiden: {biden_pct}%", color='purple', fontsize=10)
+    plt.text(election_date, 0.15, f"Trump: {trump_pct}%\nBiden: {biden_pct}%",
+             color='purple', fontsize=10)
 
     # Mark spikes and annotate with hashtags
-    for col, color, tweet_data in zip(['trump_sentiment', 'biden_sentiment'], ['red', 'blue'], [trump_data, biden_data]):
+    for col, color, tweet_data in zip(['trump_sentiment', 'biden_sentiment'],
+                                      ['red', 'blue'],
+                                      [trump_data, biden_data]):
         sentiment_diff = state_data[col].diff().fillna(0)
         # Threshold for spikes
         spikes = sentiment_diff[sentiment_diff.abs() > 0.1]
@@ -175,15 +184,16 @@ def visualize_sentiment_with_spikes(state_code, state_data, voting_results, var_
                          fontsize=8, color='black', ha='center', rotation=0)
 
     # Title and labels
-    plt.title(
-        f'Sentiment Analysis with Confidence Intervals and Spikes for {state_code}')
+    plt.title(f'Sentiment Analysis with Confidence Intervals and Spikes for \
+{state_code}')
     plt.xlabel('Date')
     plt.ylabel('Weighted Sentiment Polarity')
     plt.legend()
     plt.tight_layout()
 
     # Add figure caption for correlation matrix and CI
-    caption = f"Correlation matrix of residuals:\n{var_results.resid_corr}\n\n{ci_summary}"
+    caption = f"Correlation matrix of residuals:\n \
+{var_results.resid_corr}\n\n{ci_summary}"
     plt.figtext(0.5, -0.3, caption, wrap=True,
                 horizontalalignment='center', fontsize=10)
     plt.show()
@@ -191,20 +201,24 @@ def visualize_sentiment_with_spikes(state_code, state_data, voting_results, var_
 # Analyze all states with dynamic hashtag weights and visualization
 
 
-def analyze_all_states_with_dynamic_weights(trump_data, biden_data, voting_results):
+def analyze_all_states_with_dynamic_weights(trump_data, biden_data,
+                                            voting_results):
     trump_weights = {tag: sentiment['average_sentiment']
-                     for tag, sentiment in identify_dominant_hashtags(trump_data)}
+                     for tag, sentiment in identify_dominant_hashtags(
+                         trump_data)}
     biden_weights = {tag: sentiment['average_sentiment']
-                     for tag, sentiment in identify_dominant_hashtags(biden_data)}
+                     for tag, sentiment in identify_dominant_hashtags(
+                         biden_data)}
 
     for state_code in voting_results['state_abr']:
         try:
-            state_data = prepare_state_data(
-                trump_data, biden_data, state_code, trump_weights, biden_weights)
+            state_data = prepare_state_data(trump_data, biden_data, state_code,
+                                            trump_weights, biden_weights)
             var_results, ci_summary = perform_var_analysis_with_stationarity(
                 state_data)
-            visualize_sentiment_with_spikes(
-                state_code, state_data, voting_results, var_results, ci_summary, trump_data, biden_data)
+            visualize_sentiment_with_spikes(state_code, state_data,
+                                            voting_results, var_results,
+                                            ci_summary, trump_data, biden_data)
         except Exception as e:
             print(f"Error processing {state_code}: {e}")
 
@@ -212,8 +226,8 @@ def analyze_all_states_with_dynamic_weights(trump_data, biden_data, voting_resul
 if __name__ == "main":
     # Load datasets
     trump_tweets = pd.read_csv(
-        '../data/tweets/cleaned_hashtag_donaldtrump.csv')
-    biden_tweets = pd.read_csv('../data/tweets/cleaned_hashtag_joebiden.csv')
+        '../tmp/cleaned_hashtag_donaldtrump.csv')
+    biden_tweets = pd.read_csv('../tmp/cleaned_hashtag_joebiden.csv')
     voting_results = pd.read_csv('../data/election_results/voting.csv')
 
     # Convert 'created_at' to datetime

@@ -17,7 +17,8 @@ from matplotlib.widgets import Slider
 
 def fix_alaska(alaska_geom, scale, threshold=1e10):
     """
-    Scale and translate Alaska to fit on the map, and filter out the small islands.
+    Scale and translate Alaska to fit on the map, and filter out the small
+    islands.
     """
     alaska_scaled = affinity.scale(alaska_geom, xfact=scale, yfact=scale)
     alaska_moved = affinity.translate(
@@ -39,7 +40,8 @@ def fix_hawaii(hawaii_geom, scale):
 
 def generate_map():
     """
-    Generate a map of the US states and clean up the geometry for Alaska and Hawaii.
+    Generate a map of the US states and clean up the geometry for Alaska and
+    Hawaii.
     """
     # Read the shapefile for the US states
     states = gpd.read_file('../state_borders/cb_2018_us_state_500k.shp')
@@ -183,8 +185,10 @@ def plot_sentiment(states):
 
     for i, candidate in enumerate(['trump', 'biden']):
         # Set the colors for the states in the file
-        states['COLOR'] = states[f'{candidate}_sentiment'].apply(lambda x: get_sentiment_color(
-            x, republican_color if candidate == 'trump' else democrat_color))
+        states['COLOR'] = states[f'{candidate}_sentiment'].apply(
+            lambda x: get_sentiment_color(x, republican_color
+                                          if candidate == 'trump'
+                                          else democrat_color))
 
         # Plot the map
         states.plot(color=states['COLOR'], linewidth=0.6,
@@ -198,7 +202,8 @@ def plot_sentiment(states):
 
 def plot_time_series(states, time_series_data, n_timestamps):
     """
-    Plot a time series of sentiment data for each state, with a slider to change the timestamp.
+    Plot a time series of sentiment data for each state, with a slider to
+    change the timestamp.
     """
     # for single plot
     # fig, ax = plt.subplots(1, 1, figsize=(8, 6))
@@ -214,8 +219,10 @@ def plot_time_series(states, time_series_data, n_timestamps):
     # Function to plot the map at a given timestamp
     def get_time_series(t):
         # for single plot
-        # states['COLOR'] = [get_sentiment_color(x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
-        # states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = False, ax = ax)
+        # states['COLOR'] = [get_sentiment_color(
+        #     x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
+        # states.plot(color=states['COLOR'], linewidth=0.6,
+        #             edgecolor='black', legend=False, ax=ax)
         # ax.axis('off')
         # ax.set_title('Trump Sentiment by State')
 
@@ -227,7 +234,8 @@ def plot_time_series(states, time_series_data, n_timestamps):
             else:
                 color = biden_color
             states['COLOR'] = [get_sentiment_color(
-                x[t], color) for x in time_series_data[f'{candidate}_sentiment']]
+                x[t], color)
+                for x in time_series_data[f'{candidate}_sentiment']]
             # Plot the map
             states.plot(color=states['COLOR'], linewidth=0.6,
                         edgecolor='black', legend=False, ax=ax[i])
@@ -241,8 +249,8 @@ def plot_time_series(states, time_series_data, n_timestamps):
     # Set the axis and slider position in the plot
     axis_position = plt.axes([0.2, 0.1, 0.65, 0.03],
                              facecolor='white')
-    slider_position = Slider(axis_position,
-                             'Timestamp', valmin=0, valmax=n_timestamps-1, valstep=1, valinit=0)
+    slider_position = Slider(axis_position, 'Timestamp', valmin=0,
+                             valmax=n_timestamps-1, valstep=1, valinit=0)
 
     # Update function for when the slider is moved
 
@@ -257,15 +265,16 @@ def plot_time_series(states, time_series_data, n_timestamps):
     plt.show()
 
 
-# Plot the map
-state_map = generate_map()
-# plot_election_results(state_map)
+if __name__ == '__main__':
+    # Plot the map
+    state_map = generate_map()
+    # plot_election_results(state_map)
 
-state_map_sent = make_example_dataset(state_map)
-# plot_sentiment(state_map_sent)
+    state_map_sent = make_example_dataset(state_map)
+    # plot_sentiment(state_map_sent)
 
-# Time series example
-n_timestamps = 10
-state_map_ts = make_time_series_dataset(state_map, n_timestamps)
+    # Time series example
+    n_timestamps = 10
+    state_map_ts = make_time_series_dataset(state_map, n_timestamps)
 
-# plot_time_series(state_map, state_map_ts, n_timestamps)
+    plot_time_series(state_map, state_map_ts, n_timestamps)

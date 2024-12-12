@@ -128,19 +128,20 @@ def get_language(text):
     """
     try:
         return langid.classify(text)[0]
-    except Exception as _:
+    except Exception:
         return 'unknown'
 
 
 # Check if files are already downloaded
-if (Path(__file__).parent / "data" /
-        "tweets" / "cleaned_hashtag_donaldtrump.csv").exists() and (Path(__file__).parent / "data" /
-                                                                    "tweets" / "cleaned_hashtag_joebiden.csv").exists():
+if (Path(__file__).parent / ".." / "tmp" /
+    "cleaned_hashtag_donaldtrump.csv").exists() and \
+    (Path(__file__).parent / ".." / "tmp" /
+     "cleaned_hashtag_joebiden.csv").exists():
     print("Data already downloaded")
 else:
     # Load the datasets
-    trump_tweets = read_data("data/tweets/hashtag_donaldtrump.csv")
-    biden_tweets = read_data("data/tweets/hashtag_joebiden.csv")
+    trump_tweets = read_data("../data/tweets/hashtag_donaldtrump.csv")
+    biden_tweets = read_data("../data/tweets/hashtag_joebiden.csv")
 
     # Initialize a list of irrelevant columns
     irrelevant_cols = ['source', 'user_id', 'user_name', 'user_screen_name',
@@ -201,6 +202,6 @@ else:
 
     # Save the new datasets to csv
     trump_tweets.to_csv(
-        '../data/tweets/cleaned_hashtag_donaldtrump.csv', index=False)
+        '../tmp/cleaned_hashtag_donaldtrump.csv', index=False)
     biden_tweets.to_csv(
-        '../data/tweets/cleaned_hashtag_joebiden.csv', index=False)
+        '../tmp/cleaned_hashtag_joebiden.csv', index=False)

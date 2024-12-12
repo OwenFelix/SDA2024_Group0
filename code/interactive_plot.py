@@ -74,7 +74,8 @@ def make_time_series_dataset_real(states, n_timestamps, mean_data, candidate):
                 'state': state,
                 'timestamp': t,
                 f'{candidate}_sentiment': mean_data[(state, t)],
-                'state_name': states[states['STUSPS'] == state]['NAME'].values[0]
+                'state_name': states[states['STUSPS'] == state]
+                ['NAME'].values[0]
             })
 
     return pd.DataFrame(time_series_data)
@@ -82,7 +83,8 @@ def make_time_series_dataset_real(states, n_timestamps, mean_data, candidate):
 
 def plot_with_slider_plotly(data, candidate):
     """
-    Plot the sentiment of each state for a given candidate over time using Plotly
+    Plot the sentiment of each state for a given candidate over time using
+    Plotly
     """
     # Min and max value in data
     min_val = data[f'{candidate}_sentiment'].min()
@@ -97,11 +99,13 @@ def plot_with_slider_plotly(data, candidate):
         hover_name="state_name",
         animation_frame="timestamp",
         # Make sure the white color is at value 0
-        color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")] if candidate == "biden" else [
-            (0, "Black"), (zero_val, "White"), (1, "Red")],
+        color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")]
+        if candidate == "biden" else [(0, "Black"), (zero_val, "White"),
+                                      (1, "Red")],
         range_color=(min_val, max_val),
         scope="usa",
-        title="Biden sentiment over time" if candidate == "biden" else "Trump sentiment over time"
+        title="Biden sentiment over time" if candidate == "biden"
+        else "Trump sentiment over time"
     )
     fig.update_layout(coloraxis_colorbar=dict(title="Sentiment"))
 
@@ -110,26 +114,27 @@ def plot_with_slider_plotly(data, candidate):
     fig.show()
 
 
-# Load the voting data to get the state names and abbreviations
-voting_results = pd.read_csv('../data/election_results/voting.csv')
+if __name__ == '__main__':
+    # Load the voting data to get the state names and abbreviations
+    voting_results = pd.read_csv('../data/election_results/voting.csv')
 
-# Make dataframe of abreviations and names
-states = pd.DataFrame({'STUSPS': list(
-    voting_results['state_abr']), 'NAME': list(voting_results['state'])})
-n_timestamps = 25
+    # Make dataframe of abreviations and names
+    states = pd.DataFrame({'STUSPS': list(
+        voting_results['state_abr']), 'NAME': list(voting_results['state'])})
+    n_timestamps = 25
 
-data = pickle.load(open('../data/timeseries.pkl', 'rb'))
-# print(data['CA']['biden'][0])
-# print(data['CA']['trump'][0])
-mean_data_trump = process_sentiment_data(data, states, 'trump')
-mean_data_biden = process_sentiment_data(data, states, 'biden')
+    data = pickle.load(open('../tmp/timeseries.pkl', 'rb'))
 
-# Generate the time series data
-time_series_data_trump = make_time_series_dataset_real(
-    states, n_timestamps, mean_data_trump, "trump")
-time_series_data_biden = make_time_series_dataset_real(
-    states, n_timestamps, mean_data_biden, "biden")
+    # Process the sentiment data
+    mean_data_trump = process_sentiment_data(data, states, 'trump')
+    mean_data_biden = process_sentiment_data(data, states, 'biden')
 
-# Call the function to plot the data in separate plots
-plot_with_slider_plotly(time_series_data_trump, "trump")
-plot_with_slider_plotly(time_series_data_biden, "biden")
+    # Generate the time series data
+    time_series_data_trump = make_time_series_dataset_real(
+        states, n_timestamps, mean_data_trump, "trump")
+    time_series_data_biden = make_time_series_dataset_real(
+        states, n_timestamps, mean_data_biden, "biden")
+
+    # Call the function to plot the data in separate plots
+    plot_with_slider_plotly(time_series_data_trump, "trump")
+    plot_with_slider_plotly(time_series_data_biden, "biden")
