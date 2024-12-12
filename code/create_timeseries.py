@@ -100,11 +100,11 @@ def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
 
 
 # Load the biden dataset
-biden_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_joebiden.csv")
-trump_tweets = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
+biden_tweets = pd.read_csv("tmp/cleaned_hashtag_joebiden.csv")
+trump_tweets = pd.read_csv("tmp/cleaned_hashtag_donaldtrump.csv")
 
 # Get the states codes
-voting_results = pd.read_csv('../data/election_results/voting.csv')
+voting_results = pd.read_csv('data/election_results/voting.csv')
 state_codes = voting_results['state_abr'].tolist()
 
 # Create time series data for each state
@@ -116,6 +116,6 @@ for state in state_codes:
                          'trump': trump_tuples}
 
 # Save the timeseries data
-with open('../data/timeseries.pkl', 'wb') as f:
+with open('tmp/timeseries.pkl', 'wb') as f:
     pickle.dump(timeseries, f)
     

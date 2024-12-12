@@ -75,5 +75,3 @@ if __name__ == "__main__":
     else:
         print("Downloading tweets. Warning: This may take a minute or two")
         read_and_extract_data(URL_tweets, fn_tweets)
-
-    print("Done!")
