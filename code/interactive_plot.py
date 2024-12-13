@@ -2,13 +2,19 @@
 interactive_plot.py
 
 DESCRIPTION:
+This script generates an interactive plot of the sentiment of each state for
+the US presidential candidates Donald Trump and Joe Biden over time. The script
+uses the Plotly library to create the interactive plot. An alternative approach
+to plotting the time series data can be found in the geography_plots.py script,
+which uses the Matplotlib library to create the plots and the Slider widget for
+the time series plot.
 """
 
-import numpy as np
-import pandas as pd
-import plotly.express as px
-import pickle
-from pandas import Timestamp
+import pandas as pd  # For data manipulation
+from pandas import Timestamp  # For handling timestamps
+import numpy as np  # For numerical operations
+import plotly.express as px  # For creating interactive plots
+import pickle  # For loading the model
 
 
 def process_sentiment_data(data, states, candidate):
@@ -114,7 +120,7 @@ def plot_with_slider_plotly(data, candidate):
     fig.show()
 
 
-if __name__ == '__main__':
+def main():
     # Load the voting data to get the state names and abbreviations
     voting_results = pd.read_csv('../data/election_results/voting.csv')
 
@@ -138,3 +144,7 @@ if __name__ == '__main__':
     # Call the function to plot the data in separate plots
     plot_with_slider_plotly(time_series_data_trump, "trump")
     plot_with_slider_plotly(time_series_data_biden, "biden")
+
+
+if __name__ == '__main__':
+    main()

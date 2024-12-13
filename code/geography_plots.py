@@ -2,17 +2,24 @@
 geography_plots.py
 
 DESCRIPTION:
+This script generates plots of the US map with election results and sentiment
+data for each state. It also creates a time series plot of sentiment data for
+each state with a slider to change the timestamp. The script uses the GeoPandas
+library to read the shapefile for the US states and plot the map. This script
+also uses the Matplotlib library to create the plots and the Slider widget for
+the time series plot. An alternative approach to plotting the time series data
+can be found in the interactive_plots.py script, which uses the Plotly library.
 """
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import geopandas as gpd
-from shapely.geometry import MultiPolygon
-from shapely import affinity
-import matplotlib.colors as mcolors
-from matplotlib.widgets import Slider
+import pandas as pd  # For data manipulation
+import numpy as np  # For numerical operations
+import matplotlib.pyplot as plt  # For plotting
+import matplotlib.patches as mpatches  # For creating custom legends
+import matplotlib.colors as mcolors  # For color manipulation
+from matplotlib.widgets import Slider  # For creating a slider in the plot
+import geopandas as gpd  # For reading shapefiles
+from shapely.geometry import MultiPolygon  # For handling geometry data
+from shapely import affinity  # For scaling and translating geometries
 
 
 def fix_alaska(alaska_geom, scale, threshold=1e10):
@@ -265,12 +272,12 @@ def plot_time_series(states, time_series_data, n_timestamps):
     plt.show()
 
 
-if __name__ == '__main__':
+def main():
     # Plot the map
     state_map = generate_map()
     # plot_election_results(state_map)
 
-    state_map_sent = make_example_dataset(state_map)
+    # state_map_sent = make_example_dataset(state_map)
     # plot_sentiment(state_map_sent)
 
     # Time series example
@@ -278,3 +285,7 @@ if __name__ == '__main__':
     state_map_ts = make_time_series_dataset(state_map, n_timestamps)
 
     plot_time_series(state_map, state_map_ts, n_timestamps)
+
+
+if __name__ == '__main__':
+    main()

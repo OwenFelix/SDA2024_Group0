@@ -79,6 +79,9 @@ def create_timeseries(data, state_code, window_size):
 
 
 def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
+    """
+    Plot the sentiment polarity of tweets for Joe Biden and Donald Trump
+    """
     # Create time series for Joe Biden and Donald Trump
     biden_intervals, tweets_biden, _ = create_timeseries(
         biden_data, state_code, window_size)
@@ -99,7 +102,7 @@ def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
     plt.show()
 
 
-if __name__ == '__main__':
+def main():
     # Load the datasets
     biden_tweets = pd.read_csv("../tmp/cleaned_hashtag_joebiden.csv")
     trump_tweets = pd.read_csv("../tmp/cleaned_hashtag_donaldtrump.csv")
@@ -119,3 +122,7 @@ if __name__ == '__main__':
     # Save the timeseries data
     with open('../tmp/timeseries.pkl', 'wb') as f:
         pickle.dump(timeseries, f)
+
+
+if __name__ == '__main__':
+    main()

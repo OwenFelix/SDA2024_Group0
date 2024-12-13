@@ -2,6 +2,13 @@
 analyze_timeseries.py
 
 DESCRIPTION:
+This script extracts features from the sentiment timeseries data for the US
+presidential candidates Donald Trump and Joe Biden. The features extracted
+include the difference in mean sentiment, the standard deviation ratio, the
+cumulative difference in sentiment using Dynamic Time Warping, the skewness,
+the kurtosis, the cross-correlation, the DTW distance, the Kolmogorov-Smirnov
+test value, and the slope of the cumulative difference between the two
+timeseries.
 """
 
 import numpy as np  # For numerical operations
@@ -111,7 +118,7 @@ def cumdiff_regression(sentiment1, sentiment2):
     return slope
 
 
-if __name__ == '__main__':
+def main():
     # Load in the timeseries data
     with open('../tmp/timeseries.pkl', 'rb') as f:
         timeseries = pickle.load(f)
@@ -188,3 +195,7 @@ if __name__ == '__main__':
     # Save the features to a pickle file
     with open('../tmp/features.pkl', 'wb') as f:
         pickle.dump(features, f)
+
+
+if __name__ == '__main__':
+    main()

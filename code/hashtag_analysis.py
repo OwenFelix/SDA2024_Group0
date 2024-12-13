@@ -112,12 +112,6 @@ def plot_sentiment_polarity_not_per_state(data, window_size):
     plt.show()
 
 
-# Plan for the next steps:
-# Create timeseries where we get the most popular hashtag used on a certain day
-# Then find a way to link it to the events that happened on that day
-pd.set_option('display.max_colwidth', None)
-
-
 def create_hashtag_time_series(data, window_size):
     """
     This creates a time-series where we get the most popular hashtag used
