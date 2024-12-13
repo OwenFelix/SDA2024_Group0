@@ -15,9 +15,7 @@ import matplotlib.pyplot as plt  # For plotting
 import numpy as np  # For numerical operations
 import pickle  # For saving the model
 import warnings  # For handling warnings
-
-# Ignore warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings('ignore')  # Ignore warnings
 
 
 def weighted_mean(x):

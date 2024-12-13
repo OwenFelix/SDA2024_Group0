@@ -7,14 +7,14 @@ tweets, tests for stationarity, fits a Vector AutoRegression (VAR) model,
 and forecasts future sentiment.
 """
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.api import VAR
+import pandas as pd  # For data manipulation
+import matplotlib.pyplot as plt  # For plotting
+from statsmodels.tsa.stattools import adfuller  # For ADF test
+from statsmodels.tsa.api import VAR  # For Vector Autoregression
+# For calculating weighted mean of sentiment polarity
 from create_timeseries import weighted_mean
-
-import warnings
-warnings.filterwarnings("ignore")
+import warnings  # For handling warnings
+warnings.filterwarnings("ignore")  # Ignore warnings
 
 
 def create_timeseries(data, window_size):
@@ -55,10 +55,10 @@ def stationarity_test(data, candidate):
         print(f"The time series for {candidate} is not stationary.")
 
 
-if __name__ == "main":
+def main():
     # Load datasets
-    trump_df = pd.read_csv("../data/tweets/cleaned_hashtag_donaldtrump.csv")
-    biden_df = pd.read_csv("../data/tweets/cleaned_hashtag_joebiden.csv")
+    trump_df = pd.read_csv("../tmp/cleaned_hashtag_donaldtrump.csv")
+    biden_df = pd.read_csv("../tmp/cleaned_hashtag_joebiden.csv")
 
     # Generate time series
     trump_sentiment = create_timeseries(trump_df, '24h')
@@ -117,3 +117,7 @@ if __name__ == "main":
     plt.ylabel('Sentiment Polarity')
     plt.grid()
     plt.show()
+
+
+if __name__ == "__main__":
+    main()

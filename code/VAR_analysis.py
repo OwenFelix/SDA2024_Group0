@@ -4,13 +4,16 @@ VAR_analysis.py
 DESCRIPTION:
 """
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import re
-from statsmodels.tsa.api import VAR
-import warnings
-warnings.filterwarnings("ignore")
+import pandas as pd  # For data manipulation
+import numpy as np  # For numerical operations
+import matplotlib.pyplot as plt  # For plotting
+import re  # For regular expressions
+from statsmodels.tsa.api import VAR  # For Vector Autoregression
+from statsmodels.tsa.stattools import adfuller  # For ADF test
+# For Granger Causality test
+from statsmodels.tsa.stattools import grangercausalitytests
+import warnings  # For handling warnings
+warnings.filterwarnings("ignore")  # Ignore warnings
 
 
 def extract_hashtags(tweet):
@@ -107,6 +110,7 @@ def prepare_state_data(trump_data, biden_data, state_code, trump_weights,
     combined_data.columns = ['trump_sentiment', 'biden_sentiment']
     return combined_data
 
+
 # Perform VAR analysis with stationarity
 
 
@@ -146,7 +150,13 @@ def visualize_sentiment_with_spikes(state_code, state_data, voting_results,
              label='Biden Sentiment', color='blue')
     plt.axhline(0, color='black', linestyle='--', linewidth=0.8)
 
-    # Election date and results
+    # Key events and results
+    canceled_debate_dat = pd.to_datetime('2020-10-15')
+    plt.axvline(x=canceled_debate_dat, color='purple',
+                linestyle='--', label='Canceled Debate')
+    final_debate_date = pd.to_datetime('2020-10-22')
+    plt.axvline(x=final_debate_date, color='green',
+                linestyle='--', label='Final Debate')
     election_date = pd.to_datetime('2020-11-03')
     plt.axvline(x=election_date, color='orange',
                 linestyle='--', label='Election Date')
@@ -201,32 +211,140 @@ def visualize_sentiment_with_spikes(state_code, state_data, voting_results,
 # Analyze all states with dynamic hashtag weights and visualization
 
 
-def analyze_all_states_with_dynamic_weights(trump_data, biden_data,
-                                            voting_results):
+# def analyze_all_states_with_dynamic_weights(trump_data, biden_data,
+#                                             voting_results):
+#     trump_weights = {tag: sentiment['average_sentiment']
+#                      for tag, sentiment in identify_dominant_hashtags(
+#                          trump_data)}
+#     biden_weights = {tag: sentiment['average_sentiment']
+#                      for tag, sentiment in identify_dominant_hashtags(
+#                          biden_data)}
+
+#     for state_code in voting_results['state_abr']:
+#         try:
+#             state_data = prepare_state_data(trump_data, biden_data, state_code,
+#                                             trump_weights, biden_weights)
+#             var_results, ci_summary = perform_var_analysis_with_stationarity(
+#                 state_data)
+#             visualize_sentiment_with_spikes(state_code, state_data,
+#                                             voting_results, var_results,
+#                                             ci_summary, trump_data, biden_data)
+#         except Exception as e:
+#             print(f"Error processing {state_code}: {e}")
+
+
+# Forecast future sentiment values
+def forecast_sentiments(var_results, state_data, steps=10):
+    """
+    Forecast future sentiment values using a fitted VAR model.
+    """
+    forecast = var_results.forecast(state_data.values[-var_results.k_ar:], steps)
+    forecast_index = pd.date_range(start=state_data.index[-1], periods=steps + 1, freq='D')[1:]
+    forecast_df = pd.DataFrame(forecast, index=forecast_index, columns=state_data.columns)
+    return forecast_df
+
+# Plot the forecasted values
+def plot_forecast(state_data, forecast_df, state_code):
+    """
+    Plot the observed and forecasted sentiment values.
+    """
+    plt.figure(figsize=(12, 6))
+    plt.plot(state_data.index, state_data['trump_sentiment'], label='Observed Trump Sentiment', color='red')
+    plt.plot(state_data.index, state_data['biden_sentiment'], label='Observed Biden Sentiment', color='blue')
+    plt.plot(forecast_df.index, forecast_df['trump_sentiment'], '--', label='Forecasted Trump Sentiment', color='darkred')
+    plt.plot(forecast_df.index, forecast_df['biden_sentiment'], '--', label='Forecasted Biden Sentiment', color='darkblue')
+    plt.title(f"Sentiment Forecasting for {state_code}")
+    plt.xlabel('Date')
+    plt.ylabel('Sentiment Polarity')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+# Perform Granger causality tests
+def perform_granger_causality(state_data, max_lag=5):
+    """
+    Perform Granger causality tests between Trump and Biden sentiment series.
+    """
+    results = {}
+    for col in ['trump_sentiment', 'biden_sentiment']:
+        other_col = 'biden_sentiment' if col == 'trump_sentiment' else 'trump_sentiment'
+        test_results = grangercausalitytests(state_data[[col, other_col]], max_lag, verbose=False)
+        results[f"{col} -> {other_col}"] = {
+            lag: test_results[lag][0]['ssr_chi2test'][1]  # P-value for the test
+            for lag in range(1, max_lag + 1)
+        }
+    return results
+
+# Update analyze_all_states_with_dynamic_weights function
+def analyze_all_states_with_dynamic_weights(trump_data, biden_data, voting_results):
     trump_weights = {tag: sentiment['average_sentiment']
-                     for tag, sentiment in identify_dominant_hashtags(
-                         trump_data)}
+                     for tag, sentiment in identify_dominant_hashtags(trump_data)}
     biden_weights = {tag: sentiment['average_sentiment']
-                     for tag, sentiment in identify_dominant_hashtags(
-                         biden_data)}
+                     for tag, sentiment in identify_dominant_hashtags(biden_data)}
 
     for state_code in voting_results['state_abr']:
         try:
-            state_data = prepare_state_data(trump_data, biden_data, state_code,
-                                            trump_weights, biden_weights)
-            var_results, ci_summary = perform_var_analysis_with_stationarity(
-                state_data)
-            visualize_sentiment_with_spikes(state_code, state_data,
-                                            voting_results, var_results,
-                                            ci_summary, trump_data, biden_data)
+            state_data = prepare_state_data(trump_data, biden_data, state_code, trump_weights, biden_weights)
+            var_results, ci_summary = perform_var_analysis_with_stationarity(state_data)
+
+            # Forecast sentiments
+            forecast_df = forecast_sentiments(var_results, state_data)
+            plot_forecast(state_data, forecast_df, state_code)
+
+            # Perform Granger causality test
+            granger_results = perform_granger_causality(state_data)
+            print(f"Granger Causality Results for {state_code}:\n{granger_results}")
+
+            # Visualize sentiment
+            visualize_sentiment_with_spikes(state_code, state_data, voting_results, var_results, ci_summary, trump_data, biden_data)
         except Exception as e:
             print(f"Error processing {state_code}: {e}")
 
 
-if __name__ == "main":
+def analyze_state(trump_data, biden_data, voting_results, state_code=None):
+    """
+    Analyze sentiment and perform forecasting and Granger causality analysis
+    for a specific state or all states if no state_code is provided.
+    """
+    trump_weights = {tag: sentiment['average_sentiment']
+                     for tag, sentiment in identify_dominant_hashtags(trump_data)}
+    biden_weights = {tag: sentiment['average_sentiment']
+                     for tag, sentiment in identify_dominant_hashtags(biden_data)}
+
+    # If a specific state is provided
+    if state_code:
+        states_to_analyze = [state_code]
+    else:
+        states_to_analyze = voting_results['state_abr']
+
+    for state in states_to_analyze:
+        try:
+            state_data = prepare_state_data(trump_data, biden_data, state, trump_weights, biden_weights)
+            var_results, ci_summary = perform_var_analysis_with_stationarity(state_data)
+
+            # Forecast sentiments
+            forecast_df = forecast_sentiments(var_results, state_data)
+            plot_forecast(state_data, forecast_df, state)
+
+            # Perform Granger causality test
+            granger_results = perform_granger_causality(state_data)
+            print(f"Granger Causality Results for {state}:\n{granger_results}")
+
+            for lag, results in granger_results.items():
+                for key, p_value in results.items():
+                    if p_value < 0.05:
+                        print(f"Granger Causality: {key} at lag {lag} is significant with p-value={p_value:.4f}")
+                    else:
+                        print(f"Granger Causality: {key} at lag {lag} is not significant with p-value={p_value:.4f}")
+
+            # Visualize sentiment
+            visualize_sentiment_with_spikes(state, state_data, voting_results, var_results, ci_summary, trump_data, biden_data)
+        except Exception as e:
+            print(f"Error processing {state}: {e}")
+
+def main():
     # Load datasets
-    trump_tweets = pd.read_csv(
-        '../tmp/cleaned_hashtag_donaldtrump.csv')
+    trump_tweets = pd.read_csv('../tmp/cleaned_hashtag_donaldtrump.csv')
     biden_tweets = pd.read_csv('../tmp/cleaned_hashtag_joebiden.csv')
     voting_results = pd.read_csv('../data/election_results/voting.csv')
 
@@ -236,6 +354,14 @@ if __name__ == "main":
     biden_tweets['created_at'] = pd.to_datetime(
         biden_tweets['created_at'], errors='coerce')
 
+    # Analyze sentiment for a specific state
+    state_code = 'CA'
+    analyze_state(trump_tweets, biden_tweets, voting_results, state_code)
+
     # Analyze all states
-    analyze_all_states_with_dynamic_weights(
-        trump_tweets, biden_tweets, voting_results)
+    # analyze_all_states_with_dynamic_weights(
+    #     trump_tweets, biden_tweets, voting_results)
+
+
+if __name__ == "__main__":
+    main()
