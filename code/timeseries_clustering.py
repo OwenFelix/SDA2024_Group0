@@ -80,7 +80,7 @@ def average_kmeans_clustering(X, n_iter=100):
 
     # Perform clustering n_iter times
     for i in range(n_iter):
-        cluster_assignments[i], _ = perform_clustering(X, random_state=i * 98)
+        cluster_assignments[i], _ = perform_clustering(X, random_state=i)
     mean_clustering = np.mean(cluster_assignments, axis=0)
 
     #  Clamp each element to 0 or 1
@@ -132,7 +132,7 @@ def plot_clusters(X, cluster_assignments, true_labels):
 
 
 def main():
-    timeseries_features = load_timeseries_data('../tmp/features.pkl')
+    timeseries_features = load_timeseries_data('../tmp/features_no_gaussian.pkl')
     state_color_map = get_state_color_map()
     blue_states, red_states = get_state_groups(state_color_map)
     X = prepare_features(timeseries_features, blue_states, red_states)

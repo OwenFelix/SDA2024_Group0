@@ -67,8 +67,8 @@ def get_state_color_map():
     """
     return {
         'CA': 'blue', 'NY': 'blue', 'IL': 'blue', 'WA': 'blue',
-        'MI': 'swing', 'TX': 'red', 'FL': 'swing', 'GA': 'red',
-        'OH': 'swing', 'NC': 'swing', 'PA': 'swing', 'AZ': 'swing',
+        'MI': 'swing', 'TX': 'red', 'FL': 'red', 'GA': 'red',
+        'OH': 'red', 'NC': 'swing', 'PA': 'swing', 'AZ': 'red',
         'MA': 'blue', 'NJ': 'blue', 'VA': 'blue', 'TN': 'red',
         'IN': 'red', 'MO': 'red', 'MD': 'blue', 'WI': 'swing',
         'MN': 'swing', 'CO': 'swing', 'AL': 'red', 'SC': 'red',
@@ -231,7 +231,8 @@ def test_robustness(final_model, X_train, y_train,
     Perform hypothesis testing to check if the model performs significantly
     better than random guessing.
     """
-    n = 100
+    n = 1000
+    n_swing_states = 14
     accuracy = []
     cv_accuracy = []
     f1 = []
@@ -247,9 +248,10 @@ def test_robustness(final_model, X_train, y_train,
 
         # Evaluate the model
         swing_predictions = final_model.predict(X_swing_noisy)
+        incorrect_predictions = np.where(swing_predictions != y_swing)[0]
         average_predictions_per_state.append(swing_predictions)
 
-        accuracy.append(np.mean(swing_predictions == y_swing))
+        accuracy.append(1.0 - len(incorrect_predictions) / n_swing_states)
         cv_accuracy.append(np.mean(cross_val_score(
             final_model, X_train_noisy, y_train, cv=2)))
         f1.append(f1_score(y_swing, swing_predictions))
@@ -270,34 +272,35 @@ def test_robustness(final_model, X_train, y_train,
     print(f"Incorrect swing states: {incorrect_swing_states}")
 
     # Calculate average metrics
-    print(f'Average swing state accuracy: {np.mean(accuracy):.2f}')
+    prediction_accuracy = 1.0 - len(incorrect_predictions) / n_swing_states
+    print(f'Average swing state accuracy: {prediction_accuracy:.2f}')
     print(f'Average cross-validation accuracy: {np.mean(cv_accuracy):.2f}')
     print(f'Average F1 score: {np.mean(f1):.2f}')
 
     # Calculate 95% confidence intervals
     print(
-        f'Swing state accuracy 95% confidence interval: {np.percentile(accuracy, [2.5, 97.5])}')
+        f'Swing state accuracy 95% confidence interval: {np.percentile(accuracy, [2.5, 97.5])}'
+    )
     print(
         f'Cross-validation accuracy 95% confidence interval: {np.percentile(cv_accuracy, [2.5, 97.5])}')
     print(
         f'F1 score 95% confidence interval: {np.percentile(f1, [2.5, 97.5])}')
 
     # Perform hypothesis testing (H₀: mean = 0.50, H₁: mean > 0.50)
-    accuracy_p_value = ttest_1samp(
-        accuracy, popmean=0.70, alternative='greater').pvalue
+    prediction_accuracy_p_value = ttest_1samp(
+        accuracy, popmean=0.50, alternative='greater').pvalue
     cv_accuracy_p_value = ttest_1samp(
         cv_accuracy, popmean=0.50, alternative='greater').pvalue
     f1_p_value = ttest_1samp(f1, popmean=0.50, alternative='greater').pvalue
 
-    print(f'Swing state accuracy p-value: {accuracy_p_value:.4f}')
+    print(f'Swing state accuracy p-value: {prediction_accuracy_p_value:.4f}')
     print(f'Cross-validation accuracy p-value: {cv_accuracy_p_value:.4f}')
     print(f'F1 score p-value: {f1_p_value:.4f}')
 
-    if accuracy_p_value < 0.05:
+    if prediction_accuracy_p_value < 0.05:
         print('Reject null hypothesis for swing state accuracy')
     else:
         print('Fail to reject null hypothesis for swing state accuracy')
-
     if cv_accuracy_p_value < 0.05:
         print('Reject null hypothesis for cross-validation accuracy')
     else:

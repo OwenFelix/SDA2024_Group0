@@ -3,6 +3,7 @@ import pickle  # For loading the model
 import fastdtw  # For Dynamic Time Warping
 import scipy.stats as sp  # For statistical analysis
 import tslearn.metrics  # For time series analysis
+from sklearn.decomposition import PCA  # For dimensionality reduction
 
 
 def difference_in_mean_sentiment(sentiment1, sentiment2):
@@ -178,15 +179,27 @@ def analyze_timeseries(timeseries):
 
 
 # Load in the timeseries data
-with open('tmp/timeseries.pkl', 'rb') as f:
+with open('../tmp/timeseries.pkl', 'rb') as f:
     timeseries = pickle.load(f)
 
-with open('tmp/timeseries_no_gaussian.pkl', 'rb') as f:
+with open('../tmp/timeseries_no_gaussian.pkl', 'rb') as f:
     timeseries_no_gaussian = pickle.load(f)
 
 # Extract features from the timeseries
 features = analyze_timeseries(timeseries)
 features_no_gaussian = analyze_timeseries(timeseries_no_gaussian)
+
+# Perform PCA to analyze which features are most important
+X = np.array([list(features[state].values())
+              for state in features.keys()])
+pca = PCA()
+pca.fit(X)
+
+# Print on sorted order which features from X are most important
+print(
+    f'Following features contribute the most variance: {np.argsort(pca.components_[0])}')
+# print how much variance is explained by each component
+print(f'variance explained per index: {pca.explained_variance_ratio_}')
 
 # Save the features to a pickle file
 with open('tmp/features.pkl', 'wb') as f:
