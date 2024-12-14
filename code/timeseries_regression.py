@@ -29,7 +29,7 @@ def load_data():
     dict, pd.DataFrame
         The timeseries features and election
     """
-    with open('../data/features.pkl', 'rb') as f:
+    with open('../tmp/features.pkl', 'rb') as f:
         timeseries_features = pickle.load(f)
     with open('../data/election_results/voting.csv', 'rb') as f:
         voting = pd.read_csv(f)
@@ -153,7 +153,7 @@ def build_pipeline():
     """
     return Pipeline([
         ('scaler', StandardScaler()),
-        ('model', LogisticRegression(max_iter=100))
+        ('model', LogisticRegression(max_iter=1000))
     ])
 
 
@@ -178,7 +178,8 @@ def hyperparameter_tuning(pipeline, X_train, y_train):
     }
     grid_search = GridSearchCV(
         pipeline, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
-    grid_search.fit(X_train, y_train)
+    X_train_noisy = X_train + np.random.normal(0, 0.1, X_train.shape)
+    grid_search.fit(X_train_noisy, y_train)
     return grid_search.best_estimator_
 
 
@@ -232,6 +233,7 @@ def test_robustness(final_model, X_train, y_train,
     better than random guessing.
     """
     n = 1000
+    accuracy = []
     cv_accuracy = []
     f1 = []
     average_predictions_per_state = []
@@ -248,11 +250,13 @@ def test_robustness(final_model, X_train, y_train,
         swing_predictions = final_model.predict(X_swing_noisy)
         average_predictions_per_state.append(swing_predictions)
 
+        accuracy.append(np.mean(swing_predictions == y_swing))
         cv_accuracy.append(np.mean(cross_val_score(
-            final_model, X_train_noisy, y_train, cv=5)))
+            final_model, X_train_noisy, y_train, cv=2)))
         f1.append(f1_score(y_swing, swing_predictions))
 
     # Convert to numpy arrays
+    accuracy = np.array(accuracy)
     cv_accuracy = np.array(cv_accuracy)
     f1 = np.array(f1)
 
@@ -267,22 +271,33 @@ def test_robustness(final_model, X_train, y_train,
     print(f"Incorrect swing states: {incorrect_swing_states}")
 
     # Calculate average metrics
+    print(f'Average swing state accuracy: {np.mean(accuracy):.2f}')
     print(f'Average cross-validation accuracy: {np.mean(cv_accuracy):.2f}')
     print(f'Average F1 score: {np.mean(f1):.2f}')
 
     # Calculate 95% confidence intervals
+    print(
+        f'Swing state accuracy 95% confidence interval: {np.percentile(accuracy, [2.5, 97.5])}')
     print(
         f'Cross-validation accuracy 95% confidence interval: {np.percentile(cv_accuracy, [2.5, 97.5])}')
     print(
         f'F1 score 95% confidence interval: {np.percentile(f1, [2.5, 97.5])}')
 
     # Perform hypothesis testing (H₀: mean = 0.50, H₁: mean > 0.50)
+    accuracy_p_value = ttest_1samp(
+        accuracy, popmean=0.70, alternative='greater').pvalue
     cv_accuracy_p_value = ttest_1samp(
         cv_accuracy, popmean=0.50, alternative='greater').pvalue
     f1_p_value = ttest_1samp(f1, popmean=0.50, alternative='greater').pvalue
 
+    print(f'Swing state accuracy p-value: {accuracy_p_value:.4f}')
     print(f'Cross-validation accuracy p-value: {cv_accuracy_p_value:.4f}')
     print(f'F1 score p-value: {f1_p_value:.4f}')
+
+    if accuracy_p_value < 0.05:
+        print('Reject null hypothesis for swing state accuracy')
+    else:
+        print('Fail to reject null hypothesis for swing state accuracy')
 
     if cv_accuracy_p_value < 0.05:
         print('Reject null hypothesis for cross-validation accuracy')
@@ -306,18 +321,13 @@ def main():
         timeseries_features, state_color_map, election_results)
 
     # Encode labels
-    y_train, y_swing, label_encoder = encode_labels(y_train, y_swing)
+    y_train, y_swing, _ = encode_labels(y_train, y_swing)
 
     # Build the logistic regression pipeline
     pipeline = build_pipeline()
-    final_model = hyperparameter_tuning(pipeline, X_train, y_train)
-
-    # Evaluate the model
-    # evaluate_model(final_model, X_train, y_train,
-    #                X_swing, y_swing, label_encoder, swing_states)
 
     # Test the robustness of the model and evaluate it
-    test_robustness(final_model, X_train,
+    test_robustness(pipeline, X_train,
                     y_train, X_swing, y_swing, swing_states)
 
 

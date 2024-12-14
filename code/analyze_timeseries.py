@@ -105,78 +105,92 @@ def cumdiff_regression(sentiment1, sentiment2):
     return slope
 
 
+def analyze_timeseries(timeseries):
+    # Extract features from the timeseries
+    features = dict()
+
+    for state in timeseries.keys():
+        """
+        Extract features from the timeseries for each state.
+        The following features will be extracted of the two timeseries per state:
+        - difference in mean sentiment
+        - std ratio of the two timeseries
+        - cumulative difference in sentiment
+        - AUC (Area Under Curve) of the two timeseries
+        - skewness of the two timeseries
+        - kurtosis of the two timeseries
+        - cross-correlation between the two timeseries
+        - DTW distance between the two timeseries
+        - ks-test value between the two timeseries
+        - slope of the cumulative difference between the two timeseries
+        """
+        # First extract the timeseries for the state
+        biden = timeseries[state]['biden']
+        trump = timeseries[state]['trump']
+
+        biden_sentiment = [x[0] for x in biden]
+        trump_sentiment = [x[0] for x in trump]
+
+        # If any of the timeseries are empty, skip the state
+        if len(biden_sentiment) == 0 or len(trump_sentiment) == 0:
+            continue
+
+        # Calculate difference in mean sentiment
+        mean_diff = difference_in_mean_sentiment(
+            biden_sentiment, trump_sentiment)
+
+        # Calculate std ratio
+        std_r = std_ratio(biden_sentiment, trump_sentiment)
+
+        # Calculate skewness
+        skew_biden = skewness(biden_sentiment)
+        skew_trump = skewness(trump_sentiment)
+
+        # Calculate kurtosis
+        kurt_biden = kurtosis(biden_sentiment)
+        kurt_trump = kurtosis(trump_sentiment)
+
+        # Calculate cross-correlation
+        cross_corr = cross_correlation(biden_sentiment, trump_sentiment)
+
+        # Calculate DTW distance
+        dtw_dist = dtw_distance(biden_sentiment, trump_sentiment)
+
+        # Calculate ks-test value
+        ks_statistic, _ = ks_test(biden_sentiment, trump_sentiment)
+
+        # Calculate slope of cumulative difference
+        slope = cumdiff_regression(biden_sentiment, trump_sentiment)
+
+        # Vectorize the features
+        features[state] = {'mean_diff': mean_diff,
+                           'std_ratio': std_r,
+                           'skew_biden': skew_biden,
+                           'skew_trump': skew_trump,
+                           'kurt_biden': kurt_biden,
+                           'kurt_trump': kurt_trump,
+                           'cross_corr': cross_corr,
+                           'dtw_dist': dtw_dist,
+                           'ks': ks_statistic,
+                           'slope': slope}
+
+        return features
+
+
 # Load in the timeseries data
 with open('tmp/timeseries.pkl', 'rb') as f:
     timeseries = pickle.load(f)
 
+with open('tmp/timeseries_no_gaussian.pkl', 'rb') as f:
+    timeseries_no_gaussian = pickle.load(f)
+
 # Extract features from the timeseries
-features = dict()
-
-for state in timeseries.keys():
-    """
-    Extract features from the timeseries for each state.
-    The following features will be extracted of the two timeseries per state:
-    - difference in mean sentiment
-    - std ratio of the two timeseries
-    - cumulative difference in sentiment
-    - AUC (Area Under Curve) of the two timeseries
-    - skewness of the two timeseries
-    - kurtosis of the two timeseries
-    - cross-correlation between the two timeseries
-    - DTW distance between the two timeseries
-    - ks-test value between the two timeseries
-    - slope of the cumulative difference between the two timeseries
-    """
-    # First extract the timeseries for the state
-    biden = timeseries[state]['biden']
-    trump = timeseries[state]['trump']
-
-    biden_sentiment = [x[0] for x in biden]
-    trump_sentiment = [x[0] for x in trump]
-
-    # If any of the timeseries are empty, skip the state
-    if len(biden_sentiment) == 0 or len(trump_sentiment) == 0:
-        continue
-
-    # Calculate difference in mean sentiment
-    mean_diff = difference_in_mean_sentiment(biden_sentiment, trump_sentiment)
-
-    # Calculate std ratio
-    std_r = std_ratio(biden_sentiment, trump_sentiment)
-
-    # Calculate skewness
-    skew_biden = skewness(biden_sentiment)
-    skew_trump = skewness(trump_sentiment)
-
-    # Calculate kurtosis
-    kurt_biden = kurtosis(biden_sentiment)
-    kurt_trump = kurtosis(trump_sentiment)
-
-    # Calculate cross-correlation
-    cross_corr = cross_correlation(biden_sentiment, trump_sentiment)
-
-    # Calculate DTW distance
-    dtw_dist = dtw_distance(biden_sentiment, trump_sentiment)
-
-    # Calculate ks-test value
-    ks_statistic, _ = ks_test(biden_sentiment, trump_sentiment)
-
-    # Calculate slope of cumulative difference
-    slope = cumdiff_regression(biden_sentiment, trump_sentiment)
-
-    # Vectorize the features
-    features[state] = {'mean_diff': mean_diff,
-                       'std_ratio': std_r,
-                       'skew_biden': skew_biden,
-                       'skew_trump': skew_trump,
-                       'kurt_biden': kurt_biden,
-                       'kurt_trump': kurt_trump,
-                       'cross_corr': cross_corr,
-                       'dtw_dist': dtw_dist,
-                       'ks': ks_statistic,
-                       'slope': slope}
-
+features = analyze_timeseries(timeseries)
+features_no_gaussian = analyze_timeseries(timeseries_no_gaussian)
 
 # Save the features to a pickle file
 with open('tmp/features.pkl', 'wb') as f:
     pickle.dump(features, f)
+
+with open('tmp/features_no_gaussian.pkl', 'wb') as f:
+    pickle.dump(features_no_gaussian, f)

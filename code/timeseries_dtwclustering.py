@@ -125,7 +125,7 @@ def random_clustering_test(X, cluster_assignments, true_labels, n_iter=100):
 
 def main():
     # Step 1: Load data and prepare state data
-    timeseries = load_timeseries_data('../data/timeseries.pkl')
+    timeseries = load_timeseries_data('../tmp/timeseries_no_gaussian.pkl')
     state_color_map = get_state_color_map()
 
     # Step 2: Filter states
