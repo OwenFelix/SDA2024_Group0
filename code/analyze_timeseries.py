@@ -174,7 +174,7 @@ def analyze_timeseries(timeseries):
                            'ks': ks_statistic,
                            'slope': slope}
 
-        return features
+    return features
 
 
 # Load in the timeseries data

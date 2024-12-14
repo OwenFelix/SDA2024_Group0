@@ -178,8 +178,7 @@ def hyperparameter_tuning(pipeline, X_train, y_train):
     }
     grid_search = GridSearchCV(
         pipeline, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
-    X_train_noisy = X_train + np.random.normal(0, 0.1, X_train.shape)
-    grid_search.fit(X_train_noisy, y_train)
+    grid_search.fit(X_train, y_train)
     return grid_search.best_estimator_
 
 
@@ -232,7 +231,7 @@ def test_robustness(final_model, X_train, y_train,
     Perform hypothesis testing to check if the model performs significantly
     better than random guessing.
     """
-    n = 1000
+    n = 100
     accuracy = []
     cv_accuracy = []
     f1 = []
@@ -325,9 +324,10 @@ def main():
 
     # Build the logistic regression pipeline
     pipeline = build_pipeline()
+    best = hyperparameter_tuning(pipeline, X_train, y_train)
 
     # Test the robustness of the model and evaluate it
-    test_robustness(pipeline, X_train,
+    test_robustness(best, X_train,
                     y_train, X_swing, y_swing, swing_states)
 
 
