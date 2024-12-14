@@ -1,3 +1,11 @@
+"""
+interactive_plot.py
+
+DESCRIPTION:
+This file contains the code to generate an interactive plot of the sentiment of each state for a given candidate over time.
+The sentiment data is processed to the mean of each state and day and then plotted using Plotly Express.
+"""
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -78,12 +86,11 @@ def plot_with_slider_plotly(data, candidate):
         color=f'{candidate}_sentiment',
         hover_name="state_name",
         animation_frame="timestamp",
-        # Make sure the white color is at value 0
         color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")] if candidate == "biden" else [
             (0, "Black"), (zero_val, "White"), (1, "Red")],
         range_color=(min_val, max_val),
         scope="usa",
-        title="Biden sentiment over time" if candidate == "biden" else "Trump sentiment over time"
+        title="Biden Tweet Sentiment Over Time" if candidate == "biden" else "Trump Tweet Sentiment Over Time"
     )
     fig.update_layout(coloraxis_colorbar=dict(title="Sentiment"))
 
@@ -100,9 +107,8 @@ states = pd.DataFrame({'STUSPS': list(
     voting_results['state_abr']), 'NAME': list(voting_results['state'])})
 n_timestamps = 25
 
-data = pickle.load(open('../data/timeseries.pkl', 'rb'))
-# print(data['CA']['biden'][0])
-# print(data['CA']['trump'][0])
+data = pickle.load(open('../tmp/timeseries.pkl', 'rb'))
+
 mean_data_trump = process_sentiment_data(data, states, 'trump')
 mean_data_biden = process_sentiment_data(data, states, 'biden')
 
