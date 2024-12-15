@@ -2,24 +2,25 @@
 geography_plots.py
 
 DESCRIPTION:
-This script generates plots of the US map with election results and sentiment
-data for each state. It also creates a time series plot of sentiment data for
-each state with a slider to change the timestamp. The script uses the GeoPandas
-library to read the shapefile for the US states and plot the map. This script
-also uses the Matplotlib library to create the plots and the Slider widget for
-the time series plot. An alternative approach to plotting the time series data
-can be found in the interactive_plots.py script, which uses the Plotly library.
+This file contains the code to make a geographical plot of the US states using
+the Matplotlib and Geopandas libraries. The code generates a map of the US
+states and plots the results of the 2020 presidential election by state.
+This code also generates random time-series sentiment data for each state and
+plots it in an interactive plot with a slider to change the timestamp.
+The interactive plot is not used to plot the real sentiment data, because the
+plot was too slow, and we used Plotly instead.
+See the code in interactive_plot.py for the real sentiment data plotting.
 """
 
 import pandas as pd  # For data manipulation
 import numpy as np  # For numerical operations
 import matplotlib.pyplot as plt  # For plotting
-import matplotlib.patches as mpatches  # For creating custom legends
-import matplotlib.colors as mcolors  # For color manipulation
-from matplotlib.widgets import Slider  # For creating a slider in the plot
-import geopandas as gpd  # For reading shapefiles
-from shapely.geometry import MultiPolygon  # For handling geometry data
-from shapely import affinity  # For scaling and translating geometries
+import matplotlib.patches as mpatches  # For patches in the plot
+import matplotlib.colors as mcolors  # For colors in the plot
+from matplotlib.widgets import Slider  # For the slider in the plot
+import geopandas as gpd  # For geographical data
+from shapely.geometry import MultiPolygon  # For geometry operations
+from shapely import affinity  # For affinity operations
 
 
 def fix_alaska(alaska_geom, scale, threshold=1e10):
@@ -168,8 +169,6 @@ def get_sentiment_color(sentiment, color):
     """
     Compute a color based on the sentiment value and a target color.
     """
-    # Compute the weight of the target color and white
-    # Convert sentiment (-1 to 1) to a range of 0 to 1
     weight = (sentiment + 1) / 2
     white = mcolors.to_rgb('white')
     target = mcolors.to_rgb(color)
@@ -212,10 +211,6 @@ def plot_time_series(states, time_series_data, n_timestamps):
     Plot a time series of sentiment data for each state, with a slider to
     change the timestamp.
     """
-    # for single plot
-    # fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-
-    # for two plots
     fig, ax = plt.subplots(1, 2, figsize=(16, 5))
 
     plt.subplots_adjust(bottom=0.25)
@@ -225,7 +220,7 @@ def plot_time_series(states, time_series_data, n_timestamps):
 
     # Function to plot the map at a given timestamp
     def get_time_series(t):
-        # for single plot
+        # UNCOMMENT THIS FOR SINGLE PLOT
         # states['COLOR'] = [get_sentiment_color(
         #     x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
         # states.plot(color=states['COLOR'], linewidth=0.6,
@@ -233,7 +228,7 @@ def plot_time_series(states, time_series_data, n_timestamps):
         # ax.axis('off')
         # ax.set_title('Trump Sentiment by State')
 
-        # for two plots
+        # For two plots
         for i, candidate in enumerate(['trump', 'biden']):
             # Set the colors for the states in the file
             if candidate == 'trump':
@@ -272,20 +267,18 @@ def plot_time_series(states, time_series_data, n_timestamps):
     plt.show()
 
 
-def main():
+if __name__ == '__main__':
     # Plot the map
     state_map = generate_map()
-    # plot_election_results(state_map)
 
-    # state_map_sent = make_example_dataset(state_map)
-    # plot_sentiment(state_map_sent)
+    # Plot election results onto map
+    plot_election_results(state_map)
 
-    # Time series example
-    n_timestamps = 10
+    # Plot time series sentiment data onto map (random data)
+    n_timestamps = 25
     state_map_ts = make_time_series_dataset(state_map, n_timestamps)
-
     plot_time_series(state_map, state_map_ts, n_timestamps)
 
-
-if __name__ == '__main__':
-    main()
+    # Plot single sentiment values onto map (random data)
+    state_map_sent = make_example_dataset(state_map)
+    plot_sentiment(state_map_sent)

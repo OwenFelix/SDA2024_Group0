@@ -23,7 +23,17 @@ Run the following command if you want to download the raw data and clean it your
 python3 startup.py True
 ``` 
 
-3. To be continued...
+3. To see the interactive sentiment time series plots, run the following command in the terminal:
+```bash
+python3 interactive_plot.py 
+```
+This script also creates a video of the sentiment time series plots.
+
+4. To see a static plot for the results of the elections, run the following command in the terminal:
+```bash
+python3 geography_plots.py 
+```
+This command also shows the sentiment plots using Matplotlib, which do not use the real data.
 
 ## Dependencies
 * Python 3.7 (or higher)
@@ -35,4 +45,5 @@ python3 startup.py True
 * requests
 * zipfile
 * PyQt5
+* kaleido
 

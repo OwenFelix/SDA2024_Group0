@@ -2,19 +2,18 @@
 interactive_plot.py
 
 DESCRIPTION:
-This script generates an interactive plot of the sentiment of each state for
-the US presidential candidates Donald Trump and Joe Biden over time. The script
-uses the Plotly library to create the interactive plot. An alternative approach
-to plotting the time series data can be found in the geography_plots.py script,
-which uses the Matplotlib library to create the plots and the Slider widget for
-the time series plot.
+This file contains the code to generate an interactive plot of the sentiment
+of each state for a given candidate over time. The sentiment data is processed
+to the mean of each state and day and then plotted using Plotly Express.
 """
 
-import pandas as pd  # For data manipulation
-from pandas import Timestamp  # For handling timestamps
 import numpy as np  # For numerical operations
-import plotly.express as px  # For creating interactive plots
-import pickle  # For loading the model
+import pandas as pd  # For data manipulation
+import plotly.express as px  # For plotting
+import pickle  # For loading the sentiment data
+from pandas import Timestamp  # For handling timestamps
+import os
+import moviepy as mpy  # For creating gifs
 
 
 def process_sentiment_data(data, states, candidate):
@@ -80,8 +79,8 @@ def make_time_series_dataset_real(states, n_timestamps, mean_data, candidate):
                 'state': state,
                 'timestamp': t,
                 f'{candidate}_sentiment': mean_data[(state, t)],
-                'state_name': states[states['STUSPS'] == state]
-                ['NAME'].values[0]
+                'state_name': states[states['STUSPS'] == state][
+                    'NAME'].values[0]
             })
 
     return pd.DataFrame(time_series_data)
@@ -104,20 +103,85 @@ def plot_with_slider_plotly(data, candidate):
         color=f'{candidate}_sentiment',
         hover_name="state_name",
         animation_frame="timestamp",
-        # Make sure the white color is at value 0
         color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")]
         if candidate == "biden" else [(0, "Black"), (zero_val, "White"),
                                       (1, "Red")],
         range_color=(min_val, max_val),
         scope="usa",
-        title="Biden sentiment over time" if candidate == "biden"
-        else "Trump sentiment over time"
+        title="Biden Tweet Sentiment Over Time" if candidate == "biden"
+        else "Trump Tweet Sentiment Over Time"
     )
     fig.update_layout(coloraxis_colorbar=dict(title="Sentiment"))
 
     # Do not plot the lakes
     fig.update_geos(showlakes=False, lakecolor="white", landcolor="white")
     fig.show()
+
+
+def save_as_gif(data, candidate):
+    """
+    Plot the sentiment of each state for a given candidate over time using
+    Plotly
+    """
+
+    # Create a directory to store individual frames
+    frames_dir = f"../tmp/{candidate}_frames"
+    os.makedirs(frames_dir, exist_ok=True)
+
+    # Min and max value in data
+    min_val = data[f'{candidate}_sentiment'].min()
+    max_val = data[f'{candidate}_sentiment'].max()
+    zero_val = (0 - min_val) / (max_val - min_val)
+
+    fig = px.choropleth(
+        data,
+        locations="state",
+        locationmode="USA-states",
+        color=f'{candidate}_sentiment',
+        hover_name="state_name",
+        animation_frame="timestamp",
+        color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")]
+        if candidate == "biden" else [
+            (0, "Black"), (zero_val, "White"), (1, "Red")],
+        range_color=(min_val, max_val),
+        scope="usa",
+        title="Biden Tweet Sentiment Over Time" if candidate == "biden"
+        else "Trump Tweet Sentiment Over Time"
+    )
+    fig.update_layout(coloraxis_colorbar=dict(title="Sentiment"))
+
+    # Do not plot the lakes
+    fig.update_geos(showlakes=False, lakecolor="white", landcolor="white")
+
+    frames = []
+    index = 0
+
+    # Save each frame as a png
+    for frame in fig.frames:
+        # Update the layout and data
+        fig.update_layout(sliders=[{
+            'active': index,  # Set the active frame index
+            'steps': [{'label': str(j), 'method': 'animate', 'args':
+                       [[str(j)], {"mode": "immediate"}]} for j in range(
+                           len(fig.frames))]}])
+        fig.update(data=frame.data)
+
+        # Save the frame as a png
+        frame_file = os.path.join(frames_dir, f"frame_{frame.name}.png")
+        fig.write_image(frame_file, format="png", engine="kaleido")
+        frames.append(frame_file)
+        index += 1
+
+    # Create a gif from the frames
+    clip = mpy.ImageSequenceClip(frames, fps=2)
+    clip.write_videofile(f"../tmp/{candidate}_sentiment.mp4", fps=2)
+
+    # Remove the frames
+    for frame in frames:
+        os.remove(frame)
+
+    # Remove the frames directory
+    os.rmdir(frames_dir)
 
 
 def main():
@@ -131,7 +195,6 @@ def main():
 
     data = pickle.load(open('../tmp/timeseries.pkl', 'rb'))
 
-    # Process the sentiment data
     mean_data_trump = process_sentiment_data(data, states, 'trump')
     mean_data_biden = process_sentiment_data(data, states, 'biden')
 
@@ -144,6 +207,10 @@ def main():
     # Call the function to plot the data in separate plots
     plot_with_slider_plotly(time_series_data_trump, "trump")
     plot_with_slider_plotly(time_series_data_biden, "biden")
+
+    # Save the plots as gifs
+    save_as_gif(time_series_data_trump, "trump")
+    save_as_gif(time_series_data_biden, "biden")
 
 
 if __name__ == '__main__':
