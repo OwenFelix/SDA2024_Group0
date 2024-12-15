@@ -5,22 +5,22 @@ DESCRIPTION:
 This file contains the code to make a geographical plot of the US states using
 the Matplotlib and Geopandas libraries. The code generates a map of the US
 states and plots the results of the 2020 presidential election by state.
-This code also generates random time-series sentiment data for each state and
-plots it in an interactive plot with a slider to change the timestamp.
-The interactive plot is not used to plot the real sentiment data, because the
-plot was too slow, and we used Plotly instead.
+This code also generates random time-series sentiment data for each state
+and plots it in an interactive plot with a slider to change the timestamp.
+The interactive plot is not used to plot the real sentiment data, because
+the plot was too slow, and we used Plotly instead.
 See the code in interactive_plot.py for the real sentiment data plotting.
 """
 
 import pandas as pd  # For data manipulation
 import numpy as np  # For numerical operations
 import matplotlib.pyplot as plt  # For plotting
-import matplotlib.patches as mpatches  # For patches in the plot
-import matplotlib.colors as mcolors  # For colors in the plot
-from matplotlib.widgets import Slider  # For the slider in the plot
+import matplotlib.patches as mpatches  # For patches
+import matplotlib.colors as mcolors  # For colors
+from matplotlib.widgets import Slider  # For interactive plots
 import geopandas as gpd  # For geographical data
-from shapely.geometry import MultiPolygon  # For geometry operations
-from shapely import affinity  # For affinity operations
+from shapely.geometry import MultiPolygon  # For geometry
+from shapely import affinity  # For scaling and translating geometry
 
 
 def fix_alaska(alaska_geom, scale, threshold=1e10):
@@ -267,7 +267,7 @@ def plot_time_series(states, time_series_data, n_timestamps):
     plt.show()
 
 
-if __name__ == '__main__':
+def main():
     # Plot the map
     state_map = generate_map()
 
@@ -282,3 +282,7 @@ if __name__ == '__main__':
     # Plot single sentiment values onto map (random data)
     state_map_sent = make_example_dataset(state_map)
     plot_sentiment(state_map_sent)
+
+
+if __name__ == '__main__':
+    main()

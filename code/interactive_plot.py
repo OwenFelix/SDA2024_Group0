@@ -3,23 +3,24 @@ interactive_plot.py
 
 DESCRIPTION:
 This file contains the code to generate an interactive plot of the sentiment
-of each state for a given candidate over time. The sentiment data is processed
-to the mean of each state and day and then plotted using Plotly Express.
+of each state for a given candidate over time.
+The sentiment data is processed to the mean of each state and day and
+then plotted using Plotly Express.
 """
 
 import numpy as np  # For numerical operations
+from pandas import Timestamp  # For handling timestamps
 import pandas as pd  # For data manipulation
 import plotly.express as px  # For plotting
 import pickle  # For loading the sentiment data
-from pandas import Timestamp  # For handling timestamps
-import os
+import os  # For handling file paths
 import moviepy as mpy  # For creating gifs
 
 
 def process_sentiment_data(data, states, candidate):
     """
-    Process the sentiment data to create a DataFrame with the sentiment of
-    each state for each candidate over time.
+    Process the sentiment data to create a DataFrame with the sentiment
+    of each state for each candidate over time.
     """
     state_codes = states['STUSPS'].tolist()
     all_states_mean = {}
@@ -141,8 +142,8 @@ def save_as_gif(data, candidate):
         hover_name="state_name",
         animation_frame="timestamp",
         color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")]
-        if candidate == "biden" else [
-            (0, "Black"), (zero_val, "White"), (1, "Red")],
+        if candidate == "biden" else [(0, "Black"), (zero_val, "White"),
+                                      (1, "Red")],
         range_color=(min_val, max_val),
         scope="usa",
         title="Biden Tweet Sentiment Over Time" if candidate == "biden"
@@ -213,5 +214,5 @@ def main():
     save_as_gif(time_series_data_biden, "biden")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
