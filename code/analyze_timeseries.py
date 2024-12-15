@@ -1,3 +1,9 @@
+"""
+analyze_timeseries.py
+
+DESCRIPTION:
+This script extracts features from the sentiment time series data for each state.
+"""
 import numpy as np  # For numerical operations
 import pickle  # For loading the model
 import fastdtw  # For Dynamic Time Warping

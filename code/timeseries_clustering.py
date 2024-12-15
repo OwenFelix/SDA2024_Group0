@@ -1,3 +1,10 @@
+"""
+timeseries_clustering.py
+
+DESCRIPTION:
+
+"""
+
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
