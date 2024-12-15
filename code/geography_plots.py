@@ -133,6 +133,9 @@ def plot_sentiment_results(states, trump_data, biden_data):
 
     states_sentiment = states.copy()
 
+    print("Trump states:", trump_states)
+    print("Biden states:", biden_states)
+
     # Set the colors for the states in the file
     states_sentiment['COLOR'] = np.where(states['STUSPS'].isin(
         trump_states), republican_color, democrat_color)
