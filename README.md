@@ -27,6 +27,8 @@ python3 startup.py True
 ```bash
 python3 interactive_plot.py 
 ```
+This script also creates a video of the sentiment time series plots.
+
 4. To see a static plot for the results of the elections, run the following command in the terminal:
 ```bash
 python3 geography_plots.py 
@@ -43,4 +45,5 @@ This command also shows the sentiment plots using Matplotlib, which do not use t
 * requests
 * zipfile
 * PyQt5
+* kaleido
 
