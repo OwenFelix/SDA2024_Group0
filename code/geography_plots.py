@@ -336,7 +336,7 @@ n_timestamps = 25
 time_series_biden = pd.read_csv('../tmp/time_series_data_biden.csv')
 time_series_trump = pd.read_csv('../tmp/time_series_data_trump.csv')
 
-# only sentiment data from timestamp 19
+# Only sentiment data from timestamp 19 (election day)
 time_series_biden = time_series_biden[time_series_biden['timestamp'] == 19]
 time_series_trump = time_series_trump[time_series_trump['timestamp'] == 19]
 
