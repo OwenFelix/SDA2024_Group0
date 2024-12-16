@@ -2,28 +2,31 @@
 geography_plots.py
 
 DESCRIPTION:
-This file contains the code to make a geographical plot of the US states using the Matplotlib and Geopandas libraries.
-The code generates a map of the US states and plots the results of the 2020 presidential election by state.
-This code also generates random time-series sentiment data for each state and plots it in an interactive plot with a slider to change the timestamp.
-The interactive plot is not used to plot the real sentiment data, because the plot was too slow, and we used Plotly instead.
+This file contains the code to make a geographical plot of the US states using
+the Matplotlib and Geopandas libraries. The code generates a map of the US
+states and plots the results of the 2020 presidential election by state.
+This code also generates random time-series sentiment data for each state
+and plots it in an interactive plot with a slider to change the timestamp.
+The interactive plot is not used to plot the real sentiment data, because
+the plot was too slow, and we used Plotly instead.
 See the code in interactive_plot.py for the real sentiment data plotting.
 """
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import geopandas as gpd
-from shapely.geometry import MultiPolygon
-from shapely import affinity
-import matplotlib.colors as mcolors
-from matplotlib.widgets import Slider
-import sys
+import pandas as pd  # For data manipulation
+import numpy as np  # For numerical operations
+import matplotlib.pyplot as plt  # For plotting
+import matplotlib.patches as mpatches  # For patches
+import matplotlib.colors as mcolors  # For colors
+from matplotlib.widgets import Slider  # For interactive plots
+import geopandas as gpd  # For geographical data
+from shapely.geometry import MultiPolygon  # For geometry
+from shapely import affinity  # For scaling and translating geometry
 
 
 def fix_alaska(alaska_geom, scale, threshold=1e10):
     """
-    Scale and translate Alaska to fit on the map, and filter out the small islands.
+    Scale and translate Alaska to fit on the map, and filter out the small
+    islands.
     """
     alaska_scaled = affinity.scale(alaska_geom, xfact=scale, yfact=scale)
     alaska_moved = affinity.translate(
@@ -45,7 +48,8 @@ def fix_hawaii(hawaii_geom, scale):
 
 def generate_map():
     """
-    Generate a map of the US states and clean up the geometry for Alaska and Hawaii.
+    Generate a map of the US states and clean up the geometry for Alaska and
+    Hawaii.
     """
     # Read the shapefile for the US states
     states = gpd.read_file('../state_borders/cb_2018_us_state_500k.shp')
@@ -116,9 +120,9 @@ def make_example_dataset(states):
     for state in state_codes:
         # random float between -1 and 1
         states.loc[states['STUSPS'] == state,
-                    'trump_sentiment'] = np.random.uniform(-1, 1)
+                   'trump_sentiment'] = np.random.uniform(-1, 1)
         states.loc[states['STUSPS'] == state,
-                    'biden_sentiment'] = np.random.uniform(-1, 1)
+                   'biden_sentiment'] = np.random.uniform(-1, 1)
 
     return states
 
@@ -187,8 +191,10 @@ def plot_sentiment(states):
 
     for i, candidate in enumerate(['trump', 'biden']):
         # Set the colors for the states in the file
-        states['COLOR'] = states[f'{candidate}_sentiment'].apply(lambda x: get_sentiment_color(
-            x, republican_color if candidate == 'trump' else democrat_color))
+        states['COLOR'] = states[f'{candidate}_sentiment'].apply(
+            lambda x: get_sentiment_color(x, republican_color
+                                          if candidate == 'trump'
+                                          else democrat_color))
 
         # Plot the map
         states.plot(color=states['COLOR'], linewidth=0.6,
@@ -202,7 +208,8 @@ def plot_sentiment(states):
 
 def plot_time_series(states, time_series_data, n_timestamps):
     """
-    Plot a time series of sentiment data for each state, with a slider to change the timestamp.
+    Plot a time series of sentiment data for each state, with a slider to
+    change the timestamp.
     """
     fig, ax = plt.subplots(1, 2, figsize=(16, 5))
 
@@ -214,8 +221,10 @@ def plot_time_series(states, time_series_data, n_timestamps):
     # Function to plot the map at a given timestamp
     def get_time_series(t):
         # UNCOMMENT THIS FOR SINGLE PLOT
-        # states['COLOR'] = [get_sentiment_color(x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
-        # states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = False, ax = ax)
+        # states['COLOR'] = [get_sentiment_color(
+        #     x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
+        # states.plot(color=states['COLOR'], linewidth=0.6,
+        #             edgecolor='black', legend=False, ax=ax)
         # ax.axis('off')
         # ax.set_title('Trump Sentiment by State')
 
@@ -227,7 +236,8 @@ def plot_time_series(states, time_series_data, n_timestamps):
             else:
                 color = biden_color
             states['COLOR'] = [get_sentiment_color(
-                x[t], color) for x in time_series_data[f'{candidate}_sentiment']]
+                x[t], color)
+                for x in time_series_data[f'{candidate}_sentiment']]
             # Plot the map
             states.plot(color=states['COLOR'], linewidth=0.6,
                         edgecolor='black', legend=False, ax=ax[i])
@@ -241,11 +251,11 @@ def plot_time_series(states, time_series_data, n_timestamps):
     # Set the axis and slider position in the plot
     axis_position = plt.axes([0.2, 0.1, 0.65, 0.03],
                              facecolor='white')
-    slider_position = Slider(axis_position,
-                             'Timestamp', valmin=0, valmax=n_timestamps-1, valstep=1, valinit=0)
-
+    slider_position = Slider(axis_position, 'Timestamp', valmin=0,
+                             valmax=n_timestamps-1, valstep=1, valinit=0)
 
     # Update function for when the slider is moved
+
     def update(val):
         pos = slider_position.val
         get_time_series(int(pos))
@@ -257,17 +267,22 @@ def plot_time_series(states, time_series_data, n_timestamps):
     plt.show()
 
 
-# Plot the map
-state_map = generate_map()
+def main():
+    # Plot the map
+    state_map = generate_map()
 
-# Plot election results onto map
-plot_election_results(state_map)
+    # Plot election results onto map
+    plot_election_results(state_map)
 
-# Plot time series sentiment data onto map (random data)
-n_timestamps = 25
-state_map_ts = make_time_series_dataset(state_map, n_timestamps)
-plot_time_series(state_map, state_map_ts, n_timestamps)
+    # Plot time series sentiment data onto map (random data)
+    n_timestamps = 25
+    state_map_ts = make_time_series_dataset(state_map, n_timestamps)
+    plot_time_series(state_map, state_map_ts, n_timestamps)
 
-# Plot single sentiment values onto map (random data)
-state_map_sent = make_example_dataset(state_map)
-plot_sentiment(state_map_sent)
+    # Plot single sentiment values onto map (random data)
+    state_map_sent = make_example_dataset(state_map)
+    plot_sentiment(state_map_sent)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,9 +1,22 @@
+"""
+timeseries_dtwclustering.py
+
+DESCRIPTION:
+This script performs dynamic time warping clustering on the sentiment time
+series data for the US presidential candidates Donald Trump and Joe Biden.
+The script loads the sentiment time series data from a pickle file, filters
+the states based on their political leaning, computes the dynamic time warping
+(DTW) matrix for the sentiment time series data, performs hierarchical
+clustering on the DTW matrix, and evaluates the clustering results using
+accuracy, silhouette score, and permutation tests.
+"""
+
 import numpy as np  # For numerical operations
 import pickle  # For loading the model
 import tslearn.metrics  # For time series analysis
 import scipy.cluster.hierarchy  # For hierarchical clustering
-from sklearn.metrics import silhouette_score
-from scipy.stats import permutation_test
+from sklearn.metrics import silhouette_score  # For measuring cluster quality
+from scipy.stats import permutation_test  # For hypothesis testing
 
 
 def get_state_color_map():
@@ -83,6 +96,7 @@ def cluster_states(dtw_matrix, n_clusters=2):
 
 
 def calculate_accuracy(cluster_assignments, blue_states, red_states):
+    """This function calculates the accuracy of the clustering."""
     true_labels = [0] * len(blue_states) + [1] * len(red_states)
     accuracy = np.mean(cluster_assignments == true_labels)
     return accuracy, true_labels
@@ -125,7 +139,7 @@ def random_clustering_test(X, cluster_assignments, true_labels, n_iter=100):
 
 def main():
     # Step 1: Load data and prepare state data
-    timeseries = load_timeseries_data('../data/timeseries.pkl')
+    timeseries = load_timeseries_data('../tmp/timeseries.pkl')
     state_color_map = get_state_color_map()
 
     # Step 2: Filter states
