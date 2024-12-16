@@ -1,6 +1,12 @@
 """
-HEADER
-TODO : FILL WITH DESCRIPTION OF CONTENT OF FILE
+geography_plots.py
+
+DESCRIPTION:
+This file contains the code to make a geographical plot of the US states using the Matplotlib and Geopandas libraries.
+The code generates a map of the US states and plots the results of the 2020 presidential election by state.
+This code also generates random time-series sentiment data for each state and plots it in an interactive plot with a slider to change the timestamp.
+The interactive plot is not used to plot the real sentiment data, because the plot was too slow, and we used Plotly instead.
+See the code in interactive_plot.py for the real sentiment data plotting.
 """
 
 import pandas as pd
@@ -12,7 +18,7 @@ from shapely.geometry import MultiPolygon
 from shapely import affinity
 import matplotlib.colors as mcolors
 from matplotlib.widgets import Slider
-import plotly.express as px
+import sys
 
 
 def fix_alaska(alaska_geom, scale, threshold=1e10):
@@ -110,9 +116,9 @@ def make_example_dataset(states):
     for state in state_codes:
         # random float between -1 and 1
         states.loc[states['STUSPS'] == state,
-                   'trump_sentiment'] = np.random.uniform(-1, 1)
+                    'trump_sentiment'] = np.random.uniform(-1, 1)
         states.loc[states['STUSPS'] == state,
-                   'biden_sentiment'] = np.random.uniform(-1, 1)
+                    'biden_sentiment'] = np.random.uniform(-1, 1)
 
     return states
 
@@ -159,8 +165,6 @@ def get_sentiment_color(sentiment, color):
     """
     Compute a color based on the sentiment value and a target color.
     """
-    # Compute the weight of the target color and white
-    # Convert sentiment (-1 to 1) to a range of 0 to 1
     weight = (sentiment + 1) / 2
     white = mcolors.to_rgb('white')
     target = mcolors.to_rgb(color)
@@ -200,10 +204,6 @@ def plot_time_series(states, time_series_data, n_timestamps):
     """
     Plot a time series of sentiment data for each state, with a slider to change the timestamp.
     """
-    # for single plot
-    # fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-
-    # for two plots
     fig, ax = plt.subplots(1, 2, figsize=(16, 5))
 
     plt.subplots_adjust(bottom=0.25)
@@ -213,13 +213,13 @@ def plot_time_series(states, time_series_data, n_timestamps):
 
     # Function to plot the map at a given timestamp
     def get_time_series(t):
-        # for single plot
+        # UNCOMMENT THIS FOR SINGLE PLOT
         # states['COLOR'] = [get_sentiment_color(x[t], "#FF0803") for x in time_series_data['trump_sentiment']]
         # states.plot(color = states['COLOR'], linewidth = 0.6, edgecolor = 'black', legend = False, ax = ax)
         # ax.axis('off')
         # ax.set_title('Trump Sentiment by State')
 
-        # for two plots
+        # For two plots
         for i, candidate in enumerate(['trump', 'biden']):
             # Set the colors for the states in the file
             if candidate == 'trump':
@@ -244,8 +244,8 @@ def plot_time_series(states, time_series_data, n_timestamps):
     slider_position = Slider(axis_position,
                              'Timestamp', valmin=0, valmax=n_timestamps-1, valstep=1, valinit=0)
 
-    # Update function for when the slider is moved
 
+    # Update function for when the slider is moved
     def update(val):
         pos = slider_position.val
         get_time_series(int(pos))
@@ -259,13 +259,15 @@ def plot_time_series(states, time_series_data, n_timestamps):
 
 # Plot the map
 state_map = generate_map()
+
+# Plot election results onto map
 plot_election_results(state_map)
 
-state_map_sent = make_example_dataset(state_map)
-# plot_sentiment(state_map_sent)
-
-# Time series example
-n_timestamps = 10
+# Plot time series sentiment data onto map (random data)
+n_timestamps = 25
 state_map_ts = make_time_series_dataset(state_map, n_timestamps)
+plot_time_series(state_map, state_map_ts, n_timestamps)
 
-# plot_time_series(state_map, state_map_ts, n_timestamps)
+# Plot single sentiment values onto map (random data)
+state_map_sent = make_example_dataset(state_map)
+plot_sentiment(state_map_sent)
