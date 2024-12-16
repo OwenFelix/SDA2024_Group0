@@ -211,11 +211,12 @@ def main():
     save_as_gif(time_series_data_trump, "trump")
     save_as_gif(time_series_data_biden, "biden")
 
-# Save the data
-time_series_data_trump.to_csv('../tmp/time_series_data_trump.csv', index=False)
-time_series_data_biden.to_csv('../tmp/time_series_data_biden.csv', index=False)
+    # Save the data
+    time_series_data_trump.to_csv('../tmp/time_series_data_trump.csv',
+                                  index=False)
+    time_series_data_biden.to_csv('../tmp/time_series_data_biden.csv',
+                                  index=False)
 
-# Call the function to plot the data in separate plots
-plot_with_slider_plotly(time_series_data_trump, "trump")
-plot_with_slider_plotly(time_series_data_biden, "biden")
 
+if __name__ == "__main__":
+    main()

@@ -133,8 +133,10 @@ def get_language(text):
 
 
 # Check if files are already downloaded
-if (Path(__file__).parent / ".." / "tmp" / "cleaned_hashtag_donaldtrump.csv").exists() \
-        and (Path(__file__).parent / ".." / "tmp" / "cleaned_hashtag_joebiden.csv").exists():
+if (Path(__file__).parent / ".." / "tmp" /
+    "cleaned_hashtag_donaldtrump.csv").exists() and \
+    (Path(__file__).parent / ".." / "tmp" /
+     "cleaned_hashtag_joebiden.csv").exists():
     print("Data already downloaded")
 else:
     # Load the datasets

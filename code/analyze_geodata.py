@@ -2,18 +2,20 @@
 analyze_geodata.py
 
 DESCRIPTION:
-This file contains the code to analyze the sentiment data and compare it to the election results.
-A bar plot is generated to show the accuracy of the sentiment analysis for each day.
+This file contains the code to analyze the sentiment data and compare it to the
+election results.
+A bar plot is generated to show the accuracy of the sentiment analysis for each
+day.
 """
 
-import matplotlib.pyplot as plt
-import pandas as pd
+import pandas as pd  # For data manipulation
+import matplotlib.pyplot as plt  # For plotting
 
-
+# Load the sentiment data and voting results
 time_series_biden = pd.read_csv('../tmp/time_series_data_biden.csv')
 time_series_trump = pd.read_csv('../tmp/time_series_data_trump.csv')
-
 voting_results = pd.read_csv('../data/election_results/voting.csv')
+
 
 trump_states = list(
     voting_results[voting_results['trump_win'] == 1]['state_abr'])
@@ -28,10 +30,13 @@ for day in range(25):
     trump_day_results = []
     biden_day_results = []
     for state in voting_results['state_abr']:
-        biden_sent = time_series_biden[(time_series_biden['state'] == state) & (
-            time_series_biden['timestamp'] == day)]['biden_sentiment'].values[0]
-        trump_sent = time_series_trump[(time_series_trump['state'] == state) & (
-            time_series_trump['timestamp'] == day)]['trump_sentiment'].values[0]
+        biden_sent = time_series_biden[(time_series_biden['state'] == state) &
+                                       (time_series_biden['timestamp'] == day)
+                                       ]['biden_sentiment'].values[0]
+
+        trump_sent = time_series_trump[(time_series_trump['state'] == state) &
+                                       (time_series_trump['timestamp'] == day)
+                                       ]['trump_sentiment'].values[0]
 
         if biden_sent > trump_sent:
             biden_day_results.append(state)
