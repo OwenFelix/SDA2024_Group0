@@ -36,24 +36,6 @@ python3 geography_plots.py
 This command also shows the sentiment plots using Matplotlib, which do not use the real data.
 
 
-## Environment creation
-To be able to run our code a variety of libraries are needed. The easiest way to manage installations is through the use of an environment. We recommend creating an environment with anaconda by doing the following steps:
-
-First we will create the environment using:
-```bash
-conda env create -f environment.yml
-```
-
-Then you will need to activate the environment using:
-```console
-conda activate sdagroup0
-```
-
-Whenever you are done with running the code you may deactivate the environment using:
-```console
-conda activate sdagroup0
-```
-
 ## Dependencies
 * Python 3.8 (or higher)
 * pandas
@@ -65,4 +47,26 @@ conda activate sdagroup0
 * zipfile
 * PyQt5
 * kaleido
+
+
+## Environment creation
+To be able to run our code a variety of libraries are needed. The easiest way to manage installations is through the use of an environment. We recommend creating an environment with anaconda by doing the following steps:
+
+First we will create the environment using:
+```bash
+conda env create -f environment.yml
+```
+
+Then you will need to activate the environment using:
+```bash
+conda activate sdagroup0
+```
+
+Whenever you are done with running the code you may deactivate the environment using:
+```bash
+conda deactivate
+```
+
+## Style
+All of our code has properly been formatted and documented. We use the standard flake8 formatting for all of the files in our code directory.
 
