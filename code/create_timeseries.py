@@ -18,7 +18,6 @@ import warnings  # For handling warnings
 warnings.filterwarnings('ignore')  # Ignore warnings
 
 
-
 def weighted_mean(x, sigma=4, alpha=2, gaussian_kernel=True):
     """
     Calculate the weighted mean of sentiment polarity for a group using
@@ -128,21 +127,27 @@ def main():
     voting_results = pd.read_csv('../data/election_results/voting.csv')
     state_codes = voting_results['state_abr'].tolist()
 
-# Create time series data for each state
-timeseries = {}
-timeseries_no_gaussian = {}
-for state in state_codes:
-    _, __, b_tuples1, b_tuples2 = create_timeseries(biden_tweets, state, '24h')
-    _, __, t_tuples1, t_tuples2 = create_timeseries(trump_tweets, state, '24h')
-    timeseries[state] = {'biden': b_tuples1,
-                         'trump': t_tuples1}
-    timeseries_no_gaussian[state] = {'biden': b_tuples2,
-                                     'trump': t_tuples2}
+    # Create time series data for each state
+    timeseries = {}
+    timeseries_no_gaussian = {}
+    for state in state_codes:
+        _, __, b_tuples1, b_tuples2 = create_timeseries(
+            biden_tweets, state, '24h')
+        _, __, t_tuples1, t_tuples2 = create_timeseries(
+            trump_tweets, state, '24h')
+        timeseries[state] = {'biden': b_tuples1,
+                             'trump': t_tuples1}
+        timeseries_no_gaussian[state] = {'biden': b_tuples2,
+                                         'trump': t_tuples2}
 
-# Save the timeseries data
-with open('tmp/timeseries.pkl', 'wb') as f:
-    pickle.dump(timeseries, f)
+    # Save the timeseries data
+    with open('tmp/timeseries.pkl', 'wb') as f:
+        pickle.dump(timeseries, f)
 
-# Save the timeseries data without Gaussian kernel
-with open('tmp/timeseries_no_gaussian.pkl', 'wb') as f:
-    pickle.dump(timeseries_no_gaussian, f)
+    # Save the timeseries data without Gaussian kernel
+    with open('tmp/timeseries_no_gaussian.pkl', 'wb') as f:
+        pickle.dump(timeseries_no_gaussian, f)
+
+
+if __name__ == '__main__':
+    main()
