@@ -66,5 +66,6 @@ plt.xlabel('Day')
 plt.ylabel('Accuracy')
 plt.title('Accuracy of sentiment analysis per day')
 plt.bar(range(25), accuracy, color='blue')
+plt.ylim(0.3, 0.75)
 
 plt.show()

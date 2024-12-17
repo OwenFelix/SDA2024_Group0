@@ -51,14 +51,17 @@ elif sys.argv[1] == "False":
         parents=True, exist_ok=True)
 
     # Define the file names and URLs
-    fn_clean = Path(__file__).parent / "tmp" / \
+    fn_clean = Path(__file__).parent / ".." / "tmp" / \
         "cleaned_data.csv"
 
     # Define the URL
     URL_cleaned = "https://drive.usercontent.google.com/download?id=1m-FqDOUcoZOfBkMqnX5OAfpzEQYjQSjo&export=download&authuser=0"
 
-    # Download the data
-    read_and_extract_data(URL_cleaned, fn_clean)
+    if (Path(__file__).parent / ".." / "tmp" / "cleaned_hashtag_joebiden.csv").exists() and (Path(__file__).parent / "tmp" / "cleaned_hashtag_donaldtrump.csv").exists():
+        print("Data already downloaded")
+    else:
+        # Download the data
+        read_and_extract_data(URL_cleaned, fn_clean)
 
 # Run create_timeseries.py
 print("Creating timeseries data...")
