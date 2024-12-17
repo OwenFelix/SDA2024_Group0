@@ -1,20 +1,44 @@
-import numpy as np
-import pandas as pd
-import plotly.express as px
-import pickle
-from pandas import Timestamp
+"""
+interactive_plot.py
+
+DESCRIPTION:
+This file contains the code to generate an interactive plot of the sentiment
+of each state for a given candidate over time.
+The sentiment data is processed to the mean of each state and day and
+then plotted using Plotly Express.
+"""
+
+import numpy as np  # For numerical operations
+from pandas import Timestamp  # For handling timestamps
+import pandas as pd  # For data manipulation
+import plotly.express as px  # For plotting
+import pickle  # For loading the sentiment data
+import os  # For handling file paths
+import moviepy as mpy  # For creating gifs
 
 
 def process_sentiment_data(data, states, candidate):
     """
-    Process the sentiment data to create a DataFrame with the sentiment of each state for each candidate over time.
+    Process the sentiment data to create a DataFrame with the sentiment
+    of each state for each candidate over time.
     """
     state_codes = states['STUSPS'].tolist()
     all_states_mean = {}
 
     # Might find another way to do this, but it works for now
-    all_dates = [Timestamp(2020, 10, 15), Timestamp(2020, 10, 16), Timestamp(2020, 10, 17), Timestamp(2020, 10, 18), Timestamp(2020, 10, 19), Timestamp(2020, 10, 20), Timestamp(2020, 10, 21), Timestamp(2020, 10, 22), Timestamp(2020, 10, 23), Timestamp(2020, 10, 24), Timestamp(2020, 10, 25), Timestamp(2020, 10, 26), Timestamp(
-        2020, 10, 27), Timestamp(2020, 10, 28), Timestamp(2020, 10, 29), Timestamp(2020, 10, 30), Timestamp(2020, 10, 31), Timestamp(2020, 11, 1), Timestamp(2020, 11, 2), Timestamp(2020, 11, 3), Timestamp(2020, 11, 4), Timestamp(2020, 11, 5), Timestamp(2020, 11, 6), Timestamp(2020, 11, 7), Timestamp(2020, 11, 8)]
+    all_dates = [Timestamp(2020, 10, 15), Timestamp(2020, 10, 16),
+                 Timestamp(2020, 10, 17), Timestamp(2020, 10, 18),
+                 Timestamp(2020, 10, 19), Timestamp(2020, 10, 20),
+                 Timestamp(2020, 10, 21), Timestamp(2020, 10, 22),
+                 Timestamp(2020, 10, 23), Timestamp(2020, 10, 24),
+                 Timestamp(2020, 10, 25), Timestamp(2020, 10, 26),
+                 Timestamp(2020, 10, 27), Timestamp(2020, 10, 28),
+                 Timestamp(2020, 10, 29), Timestamp(2020, 10, 30),
+                 Timestamp(2020, 10, 31), Timestamp(2020, 11, 1),
+                 Timestamp(2020, 11, 2), Timestamp(2020, 11, 3),
+                 Timestamp(2020, 11, 4), Timestamp(2020, 11, 5),
+                 Timestamp(2020, 11, 6), Timestamp(2020, 11, 7),
+                 Timestamp(2020, 11, 8)]
     all_dates = [x.date() for x in all_dates]
 
     # Loop over each state and store the sentiment scores and mean for each day
@@ -56,7 +80,8 @@ def make_time_series_dataset_real(states, n_timestamps, mean_data, candidate):
                 'state': state,
                 'timestamp': t,
                 f'{candidate}_sentiment': mean_data[(state, t)],
-                'state_name': states[states['STUSPS'] == state]['NAME'].values[0]
+                'state_name': states[states['STUSPS'] == state][
+                    'NAME'].values[0]
             })
 
     return pd.DataFrame(time_series_data)
@@ -64,7 +89,8 @@ def make_time_series_dataset_real(states, n_timestamps, mean_data, candidate):
 
 def plot_with_slider_plotly(data, candidate):
     """
-    Plot the sentiment of each state for a given candidate over time using Plotly
+    Plot the sentiment of each state for a given candidate over time using
+    Plotly
     """
     # Min and max value in data
     min_val = data[f'{candidate}_sentiment'].min()
@@ -78,12 +104,13 @@ def plot_with_slider_plotly(data, candidate):
         color=f'{candidate}_sentiment',
         hover_name="state_name",
         animation_frame="timestamp",
-        # Make sure the white color is at value 0
-        color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")] if candidate == "biden" else [
-            (0, "Black"), (zero_val, "White"), (1, "Red")],
+        color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")]
+        if candidate == "biden" else [(0, "Black"), (zero_val, "White"),
+                                      (1, "Red")],
         range_color=(min_val, max_val),
         scope="usa",
-        title="Biden sentiment over time" if candidate == "biden" else "Trump sentiment over time"
+        title="Biden Tweet Sentiment Over Time" if candidate == "biden"
+        else "Trump Tweet Sentiment Over Time"
     )
     fig.update_layout(coloraxis_colorbar=dict(title="Sentiment"))
 
@@ -92,26 +119,104 @@ def plot_with_slider_plotly(data, candidate):
     fig.show()
 
 
-# Load the voting data to get the state names and abbreviations
-voting_results = pd.read_csv('../data/election_results/voting.csv')
+def save_as_gif(data, candidate):
+    """
+    Save the sentiment data as a video.
+    """
+    # Create a directory to store individual frames
+    frames_dir = f"../tmp/{candidate}_frames"
+    os.makedirs(frames_dir, exist_ok=True)
 
-# Make dataframe of abreviations and names
-states = pd.DataFrame({'STUSPS': list(
-    voting_results['state_abr']), 'NAME': list(voting_results['state'])})
-n_timestamps = 25
+    # Min and max value in data
+    min_val = data[f'{candidate}_sentiment'].min()
+    max_val = data[f'{candidate}_sentiment'].max()
+    zero_val = (0 - min_val) / (max_val - min_val)
 
-data = pickle.load(open('../data/timeseries.pkl', 'rb'))
-# print(data['CA']['biden'][0])
-# print(data['CA']['trump'][0])
-mean_data_trump = process_sentiment_data(data, states, 'trump')
-mean_data_biden = process_sentiment_data(data, states, 'biden')
+    fig = px.choropleth(
+        data,
+        locations="state",
+        locationmode="USA-states",
+        color=f'{candidate}_sentiment',
+        hover_name="state_name",
+        animation_frame="timestamp",
+        color_continuous_scale=[(0, "Black"), (zero_val, "White"), (1, "Blue")]
+        if candidate == "biden" else [(0, "Black"), (zero_val, "White"),
+                                      (1, "Red")],
+        range_color=(min_val, max_val),
+        scope="usa",
+        title="Biden Tweet Sentiment Over Time" if candidate == "biden"
+        else "Trump Tweet Sentiment Over Time"
+    )
+    fig.update_layout(coloraxis_colorbar=dict(title="Sentiment"))
 
-# Generate the time series data
-time_series_data_trump = make_time_series_dataset_real(
-    states, n_timestamps, mean_data_trump, "trump")
-time_series_data_biden = make_time_series_dataset_real(
-    states, n_timestamps, mean_data_biden, "biden")
+    # Do not plot the lakes
+    fig.update_geos(showlakes=False, lakecolor="white", landcolor="white")
 
-# Call the function to plot the data in separate plots
-plot_with_slider_plotly(time_series_data_trump, "trump")
-plot_with_slider_plotly(time_series_data_biden, "biden")
+    frames = []
+    index = 0
+
+    # Save each frame as a png
+    for frame in fig.frames:
+        # Update the layout and data
+        fig.update_layout(sliders=[{
+            'active': index,  # Set the active frame index
+            'steps': [{'label': str(j), 'method': 'animate', 'args':
+                       [[str(j)], {"mode": "immediate"}]} for j in range(
+                           len(fig.frames))]}])
+        fig.update(data=frame.data)
+
+        # Save the frame as a png
+        frame_file = os.path.join(frames_dir, f"frame_{frame.name}.png")
+        fig.write_image(frame_file, format="png", engine="kaleido")
+        frames.append(frame_file)
+        index += 1
+
+    # Create a gif from the frames
+    clip = mpy.ImageSequenceClip(frames, fps=2)
+    clip.write_videofile(f"../tmp/{candidate}_sentiment.mp4", fps=2)
+
+    # Remove the frames
+    for frame in frames:
+        os.remove(frame)
+
+    # Remove the frames directory
+    os.rmdir(frames_dir)
+
+
+def main():
+    # Load the voting data to get the state names and abbreviations
+    voting_results = pd.read_csv('../data/election_results/voting.csv')
+
+    # Make dataframe of abreviations and names
+    states = pd.DataFrame({'STUSPS': list(
+        voting_results['state_abr']), 'NAME': list(voting_results['state'])})
+    n_timestamps = 25
+
+    data = pickle.load(open('../tmp/timeseries.pkl', 'rb'))
+
+    mean_data_trump = process_sentiment_data(data, states, 'trump')
+    mean_data_biden = process_sentiment_data(data, states, 'biden')
+
+    # Generate the time series data
+    time_series_data_trump = make_time_series_dataset_real(
+        states, n_timestamps, mean_data_trump, "trump")
+    time_series_data_biden = make_time_series_dataset_real(
+        states, n_timestamps, mean_data_biden, "biden")
+
+    # Call the function to plot the data in separate plots
+    plot_with_slider_plotly(time_series_data_trump, "trump")
+    plot_with_slider_plotly(time_series_data_biden, "biden")
+
+    # Save the plots as gifs
+    save_as_gif(time_series_data_trump, "trump")
+    save_as_gif(time_series_data_biden, "biden")
+
+    # Save the data
+    time_series_data_trump.to_csv('../tmp/time_series_data_trump.csv',
+                                  index=False)
+    time_series_data_biden.to_csv('../tmp/time_series_data_biden.csv',
+                                  index=False)
+
+
+if __name__ == "__main__":
+    main()

@@ -15,9 +15,8 @@ import matplotlib.pyplot as plt  # For plotting
 import numpy as np  # For numerical operations
 import pickle  # For saving the model
 import warnings  # For handling warnings
+warnings.filterwarnings('ignore')  # Ignore warnings
 
-# Ignore warnings
-warnings.filterwarnings('ignore')
 
 
 def weighted_mean(x, sigma=4, alpha=2, gaussian_kernel=True):
@@ -97,6 +96,9 @@ def create_timeseries(data, state_code, window_size, gaussian_kernel=True):
 
 
 def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
+    """
+    Plot the sentiment polarity of tweets for Joe Biden and Donald Trump
+    """
     # Create time series for Joe Biden and Donald Trump
     biden_intervals, tweets_biden, _, __ = create_timeseries(
         biden_data, state_code, window_size)
@@ -117,13 +119,14 @@ def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
     plt.show()
 
 
-# Load the biden dataset
-biden_tweets = pd.read_csv("tmp/cleaned_hashtag_joebiden.csv")
-trump_tweets = pd.read_csv("tmp/cleaned_hashtag_donaldtrump.csv")
+def main():
+    # Load the datasets
+    biden_tweets = pd.read_csv("../tmp/cleaned_hashtag_joebiden.csv")
+    trump_tweets = pd.read_csv("../tmp/cleaned_hashtag_donaldtrump.csv")
 
-# Get the states codes
-voting_results = pd.read_csv('data/election_results/voting.csv')
-state_codes = voting_results['state_abr'].tolist()
+    # Get the states codes
+    voting_results = pd.read_csv('../data/election_results/voting.csv')
+    state_codes = voting_results['state_abr'].tolist()
 
 # Create time series data for each state
 timeseries = {}

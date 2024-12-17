@@ -1,3 +1,16 @@
+"""
+analyze_timeseries.py
+
+DESCRIPTION:
+This script extracts features from the sentiment timeseries data for the US
+presidential candidates Donald Trump and Joe Biden. The features extracted
+include the difference in mean sentiment, the standard deviation ratio, the
+cumulative difference in sentiment using Dynamic Time Warping, the skewness,
+the kurtosis, the cross-correlation, the DTW distance, the Kolmogorov-Smirnov
+test value, and the slope of the cumulative difference between the two
+timeseries.
+"""
+
 import numpy as np  # For numerical operations
 import pickle  # For loading the model
 import fastdtw  # For Dynamic Time Warping
@@ -177,33 +190,42 @@ def analyze_timeseries(timeseries):
 
     return features
 
+    # Save the features to a pickle file
+    with open('../tmp/features.pkl', 'wb') as f:
+        pickle.dump(features, f)
 
-# Load in the timeseries data
+
+def main():
+    # Load in the timeseries data
 with open('../tmp/timeseries.pkl', 'rb') as f:
     timeseries = pickle.load(f)
 
 with open('../tmp/timeseries_no_gaussian.pkl', 'rb') as f:
     timeseries_no_gaussian = pickle.load(f)
 
-# Extract features from the timeseries
-features = analyze_timeseries(timeseries)
-features_no_gaussian = analyze_timeseries(timeseries_no_gaussian)
+    # Extract features from the timeseries
+    features = analyze_timeseries(timeseries)
+    features_no_gaussian = analyze_timeseries(timeseries_no_gaussian)
 
-# Perform PCA to analyze which features are most important
-X = np.array([list(features[state].values())
-              for state in features.keys()])
-pca = PCA()
-pca.fit(X)
+    # Perform PCA to analyze which features are most important
+    X = np.array([list(features[state].values())
+                  for state in features.keys()])
+    pca = PCA()
+    pca.fit(X)
 
-# Print on sorted order which features from X are most important
-print(
-    f'Following features contribute the most variance: {np.argsort(pca.components_[0])}')
-# print how much variance is explained by each component
-print(f'variance explained per index: {pca.explained_variance_ratio_}')
+    # Print on sorted order which features from X are most important
+    print(
+        f'Following features contribute the most variance: {np.argsort(pca.components_[0])}')
+    # print how much variance is explained by each component
+    print(f'variance explained per index: {pca.explained_variance_ratio_}')
 
-# Save the features to a pickle file
-with open('tmp/features.pkl', 'wb') as f:
-    pickle.dump(features, f)
+    # Save the features to a pickle file
+    with open('tmp/features.pkl', 'wb') as f:
+        pickle.dump(features, f)
 
-with open('tmp/features_no_gaussian.pkl', 'wb') as f:
-    pickle.dump(features_no_gaussian, f)
+    with open('tmp/features_no_gaussian.pkl', 'wb') as f:
+                pickle.dump(features_no_gaussian, f)
+    
+
+if __name__ == '__main__':
+    main()

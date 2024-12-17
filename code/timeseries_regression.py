@@ -9,15 +9,17 @@ swing states and tests the robustness of the model by adding noise to
 the features.
 """
 
-import pickle
-import pandas as pd
-import numpy as np
-from sklearn.linear_model import LogisticRegression
+import pandas as pd  # For data manipulation
+import numpy as np  # For numerical operations
+import pickle  # For loading the data
+from sklearn.linear_model import LogisticRegression  # For logistic regression
+# For model evaluation
 from sklearn.model_selection import cross_val_score, GridSearchCV
-from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import f1_score
-from sklearn.pipeline import Pipeline
-from scipy.stats import ttest_1samp
+# For data preprocessing
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.pipeline import Pipeline  # For building a pipeline
+from scipy.stats import ttest_1samp  # For hypothesis testing
 
 
 def load_data():
@@ -72,6 +74,7 @@ def get_state_color_map():
         'MA': 'blue', 'NJ': 'blue', 'VA': 'blue', 'TN': 'red',
         'IN': 'red', 'MO': 'red', 'MD': 'blue', 'WI': 'swing',
         'MN': 'swing', 'CO': 'swing', 'AL': 'red', 'SC': 'red',
+        'SD': 'red', 'OK': 'red', 'DC': 'blue', 'LA': 'red',
         'LA': 'red', 'KY': 'red', 'OR': 'blue', 'CT': 'blue',
         'IA': 'swing', 'MS': 'red', 'AR': 'red', 'UT': 'red',
         'NV': 'swing', 'KS': 'red', 'NM': 'swing', 'NE': 'red',

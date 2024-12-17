@@ -1,18 +1,31 @@
-import pickle
-import matplotlib.pyplot as plt
-import numpy as np
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-from sklearn.metrics import silhouette_score
-from scipy.stats import permutation_test
+"""
+timeseries_clustering.py
+
+DESCRIPTION:
+This script performs KMeans clustering on the timeseries data
+of the blue and red states and performs some hypothesis tests
+to determine if the clustering is better than random.
+"""
+
+import numpy as np  # For numerical operations
+import matplotlib.pyplot as plt  # For plotting
+import pickle  # For loading the model
+from sklearn.cluster import KMeans  # For clustering
+from sklearn.decomposition import PCA  # For dimensionality reduction
+from sklearn.metrics import silhouette_score  # For silhouette score
+from scipy.stats import permutation_test  # For hypothesis testing
 
 
 def load_timeseries_data(filepath):
+    """
+    This function loads the timeseries data from the given filepath.
+    """
     with open(filepath, 'rb') as f:
         return pickle.load(f)
 
 
 def get_state_color_map():
+    """Returns a mapping of states to their political leaning colors."""
     return {
         'CA': 'blue', 'NY': 'blue', 'IL': 'blue', 'WA': 'blue',
         'MI': 'swing', 'TX': 'red', 'FL': 'swing', 'GA': 'red',
@@ -54,6 +67,10 @@ def prepare_features(timeseries_features, blue_states, red_states):
 
 
 def perform_clustering(X, n_clusters=2, random_state=567):
+    """
+    This function performs KMeans clustering on the features
+    and returns the cluster assignments and the KMeans model.
+    """
     kmeans = KMeans(n_clusters=n_clusters,
                     random_state=random_state, n_init=10)
     kmeans.fit(X)
@@ -61,6 +78,10 @@ def perform_clustering(X, n_clusters=2, random_state=567):
 
 
 def calculate_accuracy(cluster_assignments, blue_states, red_states):
+    """
+    This function calculates the accuracy of the clustering
+    by comparing the cluster assignments to the true labels.
+    """
     true_labels = [0] * len(blue_states) + [1] * len(red_states)
     accuracy = np.mean(cluster_assignments == true_labels)
     return accuracy, true_labels
@@ -105,6 +126,10 @@ def random_clustering_test(X, cluster_assignments, true_labels,
 
 
 def plot_clusters(X, cluster_assignments, true_labels):
+    """
+    This function plots the clusters obtained from KMeans clustering
+    and the true labels of the states.
+    """
     # Create a custom legend
     legend_labels = ['Biden', 'Trump']
     legend_handles = [plt.Line2D([0], [0], marker='o',
@@ -156,17 +181,17 @@ def main():
     plot_clusters(X, average_clustering, true_labels)
 
     if silhouette_avg > 0.5:
-        print('Reject the null hypothesis that'
+        print('Reject the null hypothesis that '
               'the clusters are not distinct.')
     else:
-        print('Fail to reject the null hypothesis'
+        print('Fail to reject the null hypothesis '
               'that the clusters are not distinct.')
 
     if p_value < 0.05:
-        print('Reject the null hypothesis that the'
+        print('Reject the null hypothesis that the '
               'clustering is not better than random.')
     else:
-        print('Fail to reject the null hypothesis that'
+        print('Fail to reject the null hypothesis that '
               'the clustering is not better than random.')
 
 
