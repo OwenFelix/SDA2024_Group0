@@ -111,18 +111,81 @@ def plot_election_results(states):
     plt.show()
 
 
-def make_example_dataset(states):
+def plot_sentiment_results(states, trump_data, biden_data):
+    """
+    Plot the sentiment results on a map of the US and compare them to the real
+    election results.
+    """
+    voting_results = pd.read_csv('../data/election_results/voting.csv')
+
+    biden_states = []
+    trump_states = []
+
+    for state in voting_results['state_abr']:
+        biden_sentiment = biden_data[biden_data['state'] == state][
+            'biden_sentiment'].mean()
+        trump_sentiment = trump_data[trump_data['state'] == state][
+            'trump_sentiment'].mean()
+
+        if biden_sentiment > trump_sentiment:
+            biden_states.append(state)
+
+        elif trump_sentiment > biden_sentiment:
+            trump_states.append(state)
+
+    republican_color = '#FF0803'
+    democrat_color = '#0000FF'
+
+    states_sentiment = states.copy()
+
+    print("Trump states:", trump_states)
+    print("Biden states:", biden_states)
+
+    # Set the colors for the states in the file
+    states_sentiment['COLOR'] = np.where(states['STUSPS'].isin(
+        trump_states), republican_color, democrat_color)
+
+    trump_states_real = voting_results[voting_results['trump_win'] == 1][
+        'state']
+    states['COLOR'] = np.where(states['NAME'].isin(
+        trump_states_real), republican_color, democrat_color)
+
+    republican_patch = mpatches.Patch(
+        color=republican_color, label='Trump-Winning States')
+    democrat_patch = mpatches.Patch(
+        color=democrat_color, label='Biden-Winning States')
+
+    # Plot the map
+    fig, ax = plt.subplots(1, 2, figsize=(16, 5))
+    # plot the sentiment left and the real results on the right
+    states.plot(color=states_sentiment['COLOR'], linewidth=0.6,
+                edgecolor='black', legend=False, ax=ax[0])
+
+    states.plot(color=states['COLOR'], linewidth=0.6,
+                edgecolor='black', legend=False, ax=ax[1])
+
+    # Set the legend
+    plt.legend(handles=[republican_patch, democrat_patch],
+               loc='center left', bbox_to_anchor=(0.7, -0.1))
+    ax[0].axis('off')
+    ax[1].axis('off')
+    ax[0].set_title('Sentiment Results by State')
+    ax[1].set_title('Real Results by State')
+
+    plt.show()
+
+
+def make_example_dataset(states, trump_data, biden_data):
     """
     Generate random sentiment data for each state for both candidates.
     """
     state_codes = states['STUSPS'].tolist()
 
     for state in state_codes:
-        # random float between -1 and 1
-        states.loc[states['STUSPS'] == state,
-                   'trump_sentiment'] = np.random.uniform(-1, 1)
-        states.loc[states['STUSPS'] == state,
-                   'biden_sentiment'] = np.random.uniform(-1, 1)
+        states.loc[states['STUSPS'] == state, 'trump_sentiment'] = trump_data[
+            trump_data['state'] == state]['trump_sentiment'].values[0]
+        states.loc[states['STUSPS'] == state, 'biden_sentiment'] = biden_data[
+            biden_data['state'] == state]['biden_sentiment'].values[0]
 
     return states
 
@@ -251,6 +314,7 @@ def plot_time_series(states, time_series_data, n_timestamps):
     # Set the axis and slider position in the plot
     axis_position = plt.axes([0.2, 0.1, 0.65, 0.03],
                              facecolor='white')
+
     slider_position = Slider(axis_position, 'Timestamp', valmin=0,
                              valmax=n_timestamps-1, valstep=1, valinit=0)
 
@@ -279,9 +343,19 @@ def main():
     state_map_ts = make_time_series_dataset(state_map, n_timestamps)
     plot_time_series(state_map, state_map_ts, n_timestamps)
 
-    # Plot single sentiment values onto map (random data)
-    state_map_sent = make_example_dataset(state_map)
-    plot_sentiment(state_map_sent)
+    # Plot single sentiment values onto map
+    # state_map_sent = make_example_dataset(state_map)
+    # plot_sentiment(state_map_sent)
+
+    # Read data from csv
+    time_series_biden = pd.read_csv('../tmp/time_series_data_biden.csv')
+    time_series_trump = pd.read_csv('../tmp/time_series_data_trump.csv')
+
+    # Only sentiment data from timestamp 19 (election day)
+    time_series_biden = time_series_biden[time_series_biden['timestamp'] == 19]
+    time_series_trump = time_series_trump[time_series_trump['timestamp'] == 19]
+
+    plot_sentiment_results(state_map, time_series_trump, time_series_biden)
 
 
 if __name__ == '__main__':

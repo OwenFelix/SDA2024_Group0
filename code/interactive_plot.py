@@ -121,10 +121,8 @@ def plot_with_slider_plotly(data, candidate):
 
 def save_as_gif(data, candidate):
     """
-    Plot the sentiment of each state for a given candidate over time using
-    Plotly
+    Save the sentiment data as a video.
     """
-
     # Create a directory to store individual frames
     frames_dir = f"../tmp/{candidate}_frames"
     os.makedirs(frames_dir, exist_ok=True)
@@ -212,6 +210,12 @@ def main():
     # Save the plots as gifs
     save_as_gif(time_series_data_trump, "trump")
     save_as_gif(time_series_data_biden, "biden")
+
+    # Save the data
+    time_series_data_trump.to_csv('../tmp/time_series_data_trump.csv',
+                                  index=False)
+    time_series_data_biden.to_csv('../tmp/time_series_data_biden.csv',
+                                  index=False)
 
 
 if __name__ == "__main__":

@@ -9,8 +9,7 @@ This project is part of the course "Scientific Data Analysis" at the University 
 * Annabelle Donato
 
 ## Project description
-lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec elit
-nec nunc ultricies ultricies.
+This project aims to analyze the sentiment of tweets during the Americam Presidential Elections of 2020. We use a dataset of tweets, which we filter to only have English tweets that were sent from the United States. We then analyze the sentiment of each tweet and divide them into the different states. We created time series plots od the sentiment of each state. 
 
 ## How to use
 1. Clone the repository
