@@ -1,11 +1,11 @@
 """
-    create_data_folder.py
+create_data_folder.py
 
-    DESCRIPTION:
-    This script downloads the necessary data for our project and
-    extracts it to the correct folders. The data is downloaded from
-    a shorturl link and extracted to the data folder in the project
-    directory.
+DESCRIPTION:
+This script downloads the necessary data for our project and
+extracts it to the correct folders. The data is downloaded from
+a shorturl link and extracted to the data folder in the project
+directory.
 """
 
 import zipfile
@@ -48,7 +48,6 @@ if __name__ == "__main__":
     # Define the file names and URLs
     fn_results = Path(__file__).parent / ".." / "data" / \
         "election_results" / "election_results.csv"
-    print(fn_results)
     fn_tweets = Path(__file__).parent / ".." / "data" / "tweets" / "tweets.csv"
 
     URL_results = r"https://drive.usercontent.google.com/download?id=10XQTzZJ8YA71moJRG-9_G5d4ksAfXtMF&export=download"

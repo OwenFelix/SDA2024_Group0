@@ -1,3 +1,15 @@
+"""
+startup.py
+
+DESCRIPTION:
+This script is used to download the data, preprocess it, create the timeseries
+data, and analyze the timeseries data. The user can specify whether to
+preprocess the data or not by providing an argument when running the script.
+The argument should be either "True" or "False". If the argument is "True",
+the script will preprocess the data. If the argument is "False", the script
+will download the clean data.
+"""
+
 import subprocess
 import sys
 import requests
@@ -35,7 +47,8 @@ print("Data downloaded and extracted successfully!\n")
 
 # Check if the user provided an argument
 if len(sys.argv) < 2:
-    print("Please provide an argument to specify whether to preprocess the data or not.")
+    print("Please provide an argument to specify whether to preprocess the \
+data or not.")
     sys.exit()
 
 # Download the clean data or preprocess the raw data
@@ -43,7 +56,7 @@ if sys.argv[1] == "True":
     # Run data_preprocessing.py
     print("Preprocessing the data...")
     print("Warning: This is going to take quite a while!")
-    subprocess.run(["python3", "code/data_preprocessing.py"])
+    subprocess.run(["python3", "../code/data_preprocessing.py"])
 elif sys.argv[1] == "False":
     print("Downloading clean data...")
 
@@ -70,10 +83,10 @@ elif sys.argv[1] == "False":
 # Run create_timeseries.py
 print("Creating timeseries data...")
 print("This will take about five to ten minutes...")
-subprocess.run(["python3", "create_timeseries.py"])
+subprocess.run(["python3", "../code/create_timeseries.py"])
 print("Timeseries data created successfully!\n")
 
 # Run analyze_timeseries.py
 print("Analyzing timeseries data...")
-subprocess.run(["python3", "analyze_timeseries.py"])
+subprocess.run(["python3", "../code/analyze_timeseries.py"])
 print("Timeseries data analyzed successfully\n!")

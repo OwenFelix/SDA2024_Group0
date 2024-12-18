@@ -8,6 +8,9 @@ used in the tweets, filters out hashtags that contain the candidate's name,
 and creates a time series of the hashtag frequency. It also calculates the
 correlation between the sentiment polarity of the tweets and the total hashtag
 frequency.
+
+Note: This code was not used in the final presentation as it lacked relevance
+for the scope of the project.
 """
 
 import pandas as pd  # For data manipulation
@@ -97,7 +100,7 @@ def create_time_series_not_per_state(data, window_size):
     return tupled_intervals
 
 
-def plot_sentiment_polarity_not_per_state(data, window_size):
+def plot_sentiment_polarity_not_per_state(data, window_size, candidate):
     """
     This function plots the sentiment polarity of the tweets over time.
     This is done without grouping the tweets by state.
@@ -112,7 +115,7 @@ def plot_sentiment_polarity_not_per_state(data, window_size):
     plt.axhline(y=0, color='black', linestyle='--', label='Neutral')
     plt.xlabel('Date')
     plt.ylabel('Sentiment Polarity')
-    plt.title('Sentiment Polarity of Tweets')
+    plt.title(f'Sentiment Polarity of Tweets for {candidate}')
     plt.legend()
     plt.show()
 
@@ -204,8 +207,8 @@ for Biden is statistically significant.")
         print("The correlation between sentiment and hashtag frequency \
 for Biden is not statistically significant.")
 
-    plot_sentiment_polarity_not_per_state(trump_hashtags, '24h')
-    plot_sentiment_polarity_not_per_state(biden_hashtags, '24h')
+    plot_sentiment_polarity_not_per_state(trump_hashtags, '24h', 'Trump')
+    plot_sentiment_polarity_not_per_state(biden_hashtags, '24h', 'Biden')
 
 
 if __name__ == "__main__":

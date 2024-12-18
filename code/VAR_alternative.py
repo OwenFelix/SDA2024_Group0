@@ -1,19 +1,20 @@
 """
-    This script processes, analyzes, and visualizes sentiment trends from tweets
-    to investigate public opinion for Trump and Biden across various U.S. states
-    during the 2020 election. It applies time series methods such as Vector Auto
-    regression (VAR) and ARIMA models to study sentiment interactions and temporal
-    dynamics.
-"""
+VAR_alternative.py
 
-"""
-    Caveat: this was not included in the presentation because we didn't have time
-    to check if ARIMA can help reflect the twitter sentiments for states with
-    insufficient data and can't be made stationary after 2 differencing attempts.
-    Since ARIMA focuses only on a single candidate’s sentiment trend over time,
-    it might lead to biased results. It would have been interesting to test and
-    set limitations to use it but we ran out of time to look into how we can
-    integrate this to our analysis.
+DESCRIPTION:
+This script processes, analyzes, and visualizes sentiment trends from tweets
+to investigate public opinion for Trump and Biden across various U.S. states
+during the 2020 election. It applies time series methods such as Vector Auto
+regression (VAR) and ARIMA models to study sentiment interactions and temporal
+dynamics.
+
+Caveat: this was not included in the presentation because we didn't have time
+to check if ARIMA can help reflect the twitter sentiments for states with
+insufficient data and can't be made stationary after 2 differencing attempts.
+Since ARIMA focuses only on a single candidate’s sentiment trend over time,
+it might lead to biased results. It would have been interesting to test and
+set limitations to use it but we ran out of time to look into how we can
+integrate this to our analysis.
 """
 
 import pandas as pd
@@ -23,7 +24,7 @@ import re
 from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.arima.model import ARIMA
-import matplotlib
+
 
 # Extract hashtags from tweet text
 def extract_hashtags(tweet):
@@ -52,7 +53,8 @@ def identify_dominant_hashtags(data, top_n=10):
         }
         for tag, sentiments in hashtag_sentiments.items()
     }
-    return sorted(hashtag_summary.items(), key=lambda x: x[1]['frequency'], reverse=True)[:top_n]
+    return sorted(hashtag_summary.items(), key=lambda x: x[1]['frequency'],
+                  reverse=True)[:top_n]
 
 
 # Compute weighted sentiment score using hashtag weights
@@ -105,14 +107,18 @@ def check_stationarity_with_differencing(series, name, max_diff=2):
 
 
 # Visualize sentiment trends with spikes and hashtags
-def visualize_sentiment(state_code, combined_data, spikes, hashtags, voting_results, analysis_type):
+def visualize_sentiment(state_code, combined_data, spikes, hashtags,
+                        voting_results, analysis_type):
     plt.figure(figsize=(14, 8))
-    plt.plot(combined_data.index, combined_data['trump_sentiment'], label="Trump Sentiment", color="red")
-    plt.plot(combined_data.index, combined_data['biden_sentiment'], label="Biden Sentiment", color="blue")
+    plt.plot(combined_data.index, combined_data['trump_sentiment'],
+             label="Trump Sentiment", color="red")
+    plt.plot(combined_data.index, combined_data['biden_sentiment'],
+             label="Biden Sentiment", color="blue")
     plt.axhline(0, color="black", linestyle="--", linewidth=0.8)
 
     # Add spikes with hashtags
-    for col, color in zip(['trump_sentiment', 'biden_sentiment'], ['red', 'blue']):
+    for col, color in zip(['trump_sentiment', 'biden_sentiment'],
+                          ['red', 'blue']):
         for idx in spikes[col].index:
             value = combined_data.at[idx, col]
             hashtags_on_date = hashtags.get(idx.date(), [])
@@ -178,8 +184,10 @@ biden_data = pd.read_csv('../tmp/cleaned_hashtag_joebiden.csv')
 voting_results = pd.read_csv('../data/election_results/voting.csv')
 
 # Convert 'created_at' to datetime
-trump_data['created_at'] = pd.to_datetime(trump_data['created_at'], errors='coerce')
-biden_data['created_at'] = pd.to_datetime(biden_data['created_at'], errors='coerce')
+trump_data['created_at'] = pd.to_datetime(trump_data['created_at'],
+                                          errors='coerce')
+biden_data['created_at'] = pd.to_datetime(biden_data['created_at'],
+                                          errors='coerce')
 
 # Run analysis
 analyze_states(trump_data, biden_data, voting_results)
