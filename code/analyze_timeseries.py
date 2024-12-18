@@ -16,6 +16,7 @@ import pickle  # For loading the model
 import fastdtw  # For Dynamic Time Warping
 import scipy.stats as sp  # For statistical analysis
 import tslearn.metrics  # For time series analysis
+from sklearn.decomposition import PCA  # For dimensionality reduction
 
 
 def difference_in_mean_sentiment(sentiment1, sentiment2):
@@ -118,19 +119,14 @@ def cumdiff_regression(sentiment1, sentiment2):
     return slope
 
 
-def main():
-    # Load in the timeseries data
-    with open('../tmp/timeseries.pkl', 'rb') as f:
-        timeseries = pickle.load(f)
-
+def analyze_timeseries(timeseries):
     # Extract features from the timeseries
     features = dict()
 
     for state in timeseries.keys():
         """
-        Extract features from the timeseries for each state.
-        The following features will be extracted of the two timeseries per
-        state:
+        Extract features from the two timeseries for each state.
+        The following features will be extracted:
         - difference in mean sentiment
         - std ratio of the two timeseries
         - cumulative difference in sentiment
@@ -192,9 +188,45 @@ def main():
                            'ks': ks_statistic,
                            'slope': slope}
 
+    return features
+
     # Save the features to a pickle file
     with open('../tmp/features.pkl', 'wb') as f:
         pickle.dump(features, f)
+
+
+def main():
+    # Load in the timeseries data
+    with open('../tmp/timeseries.pkl', 'rb') as f:
+        timeseries = pickle.load(f)
+
+    with open('../tmp/timeseries_no_gaussian.pkl', 'rb') as f:
+        timeseries_no_gaussian = pickle.load(f)
+
+    # Extract features from the timeseries
+    features = analyze_timeseries(timeseries)
+    features_no_gaussian = analyze_timeseries(timeseries_no_gaussian)
+
+    # Perform PCA to analyze which features are most important
+    X = np.array([list(features[state].values())
+                  for state in features.keys()])
+    pca = PCA()
+    pca.fit(X)
+
+    # Print on sorted order which features from X are most important
+    print(
+        f'Following features contribute the most variance:'
+        f'{np.argsort(pca.components_[0])}'
+    )
+    # print how much variance is explained by each component
+    print(f'variance explained per index: {pca.explained_variance_ratio_}')
+
+    # Save the features to a pickle file
+    with open('../tmp/features.pkl', 'wb') as f:
+        pickle.dump(features, f)
+
+    with open('../tmp/features_no_gaussian.pkl', 'wb') as f:
+        pickle.dump(features_no_gaussian, f)
 
 
 if __name__ == '__main__':

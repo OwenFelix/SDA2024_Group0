@@ -4,6 +4,7 @@ import requests
 from pathlib import Path
 import shutil
 
+
 def read_and_extract_data(URL, fn):
     if fn.exists():
         print("Data already downloaded")
@@ -29,7 +30,7 @@ def read_and_extract_data(URL, fn):
 
 # Run create_data_folder.py
 print("Downloading and extracting data...")
-subprocess.run(["python", "create_data_folder.py"])
+subprocess.run(["python3", "create_data_folder.py"])
 print("Data downloaded and extracted successfully!\n")
 
 # Check if the user provided an argument
@@ -42,12 +43,12 @@ if sys.argv[1] == "True":
     # Run data_preprocessing.py
     print("Preprocessing the data...")
     print("Warning: This is going to take quite a while!")
-    subprocess.run(["python", "code/data_preprocessing.py"])
+    subprocess.run(["python3", "code/data_preprocessing.py"])
 elif sys.argv[1] == "False":
     print("Downloading clean data...")
 
     # First make sure the data folder and its subfolders exist
-    Path(__file__).parent.joinpath("tmp").mkdir(
+    Path(__file__).parent.joinpath("..", "tmp").mkdir(
         parents=True, exist_ok=True)
 
     # Define the file names and URLs
@@ -57,7 +58,10 @@ elif sys.argv[1] == "False":
     # Define the URL
     URL_cleaned = "https://drive.usercontent.google.com/download?id=1m-FqDOUcoZOfBkMqnX5OAfpzEQYjQSjo&export=download&authuser=0"
 
-    if (Path(__file__).parent / ".." / "tmp" / "cleaned_hashtag_joebiden.csv").exists() and (Path(__file__).parent / "tmp" / "cleaned_hashtag_donaldtrump.csv").exists():
+    if (Path(__file__).parent / ".." / "tmp" /
+        "cleaned_hashtag_joebiden.csv").exists() \
+        and (Path(__file__).parent / "tmp" /
+             "cleaned_hashtag_donaldtrump.csv").exists():
         print("Data already downloaded")
     else:
         # Download the data
@@ -65,11 +69,11 @@ elif sys.argv[1] == "False":
 
 # Run create_timeseries.py
 print("Creating timeseries data...")
-print("This will take a minute or two...")
-subprocess.run(["python", "code/create_timeseries.py"])
+print("This will take about five to ten minutes...")
+subprocess.run(["python3", "create_timeseries.py"])
 print("Timeseries data created successfully!\n")
 
 # Run analyze_timeseries.py
 print("Analyzing timeseries data...")
-subprocess.run(["python", "code/analyze_timeseries.py"])
+subprocess.run(["python3", "analyze_timeseries.py"])
 print("Timeseries data analyzed successfully\n!")

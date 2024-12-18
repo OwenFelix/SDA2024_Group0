@@ -18,7 +18,7 @@ import warnings  # For handling warnings
 warnings.filterwarnings('ignore')  # Ignore warnings
 
 
-def weighted_mean(x):
+def weighted_mean(x, sigma=4, alpha=2, gaussian_kernel=True):
     """
     Calculate the weighted mean of sentiment polarity for a group using
     the number of likes and retweets as weights.
@@ -35,6 +35,18 @@ def weighted_mean(x):
     sentiment_weight = 2 * np.log1p(likes) + 5 * np.log1p(retweets)
     sentiment_weight = np.where(sentiment_weight == 0, 1, sentiment_weight)
 
+    if not gaussian_kernel:
+        return np.sum(sentiment_polarity * sentiment_weight) /  \
+            np.sum(sentiment_weight)
+
+    # Calculate Gaussian kernel weights
+    positions = np.arange(len(x))
+    center = len(x) // 2
+    gaussian_kernel = np.exp(-0.5 * ((positions - center) / sigma) ** 2)
+
+    # Combine sentiment-based and Gaussian kernel weights
+    sentiment_weight = alpha * sentiment_weight + (1 - alpha) * gaussian_kernel
+
     # Normalize weights
     sentiment_weight /= np.sum(sentiment_weight)
 
@@ -42,7 +54,7 @@ def weighted_mean(x):
     return np.sum(sentiment_polarity * sentiment_weight)
 
 
-def create_timeseries(data, state_code, window_size):
+def create_timeseries(data, state_code, window_size, gaussian_kernel=True):
     """
     Create time series data for a given state based on the sentiment
     polarity of tweets.
@@ -64,16 +76,22 @@ def create_timeseries(data, state_code, window_size):
 
     # Initialize a list to store processed intervals (weighted means)
     intervals = []
+    gaussian_free_intervals = []
 
     # Loop through each window and calculate the weighted mean sentiment
     # polarity
     for interval in rolling_tweets:
-        intervals.append(weighted_mean(interval))
+        intervals.append(weighted_mean(
+            interval, gaussian_kernel=True))
+        gaussian_free_intervals.append(weighted_mean(
+            interval, gaussian_kernel=False))
 
     # Make a list of tuples with the intervals and the corresponding dates
     tupled_intervals = list(zip(intervals, tweets.index))
+    tupled_intervals_no_gaussian = list(
+        zip(gaussian_free_intervals, tweets.index))
 
-    return intervals, tweets, tupled_intervals
+    return intervals, tweets, tupled_intervals, tupled_intervals_no_gaussian
 
 
 def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
@@ -81,9 +99,9 @@ def plot_sentiment_polarity(biden_data, trump_data, state_code, window_size):
     Plot the sentiment polarity of tweets for Joe Biden and Donald Trump
     """
     # Create time series for Joe Biden and Donald Trump
-    biden_intervals, tweets_biden, _ = create_timeseries(
+    biden_intervals, tweets_biden, _, __ = create_timeseries(
         biden_data, state_code, window_size)
-    trump_intervals, tweets_trump, _ = create_timeseries(
+    trump_intervals, tweets_trump, _, __ = create_timeseries(
         trump_data, state_code, window_size)
 
     # Plot the sentiment polarity
@@ -111,15 +129,24 @@ def main():
 
     # Create time series data for each state
     timeseries = {}
+    timeseries_no_gaussian = {}
     for state in state_codes:
-        _, __, biden_tuples = create_timeseries(biden_tweets, state, '24h')
-        _, __, trump_tuples = create_timeseries(trump_tweets, state, '24h')
-        timeseries[state] = {'biden': biden_tuples,
-                             'trump': trump_tuples}
+        _, __, b_tuples1, b_tuples2 = create_timeseries(
+            biden_tweets, state, '24h')
+        _, __, t_tuples1, t_tuples2 = create_timeseries(
+            trump_tweets, state, '24h')
+        timeseries[state] = {'biden': b_tuples1,
+                             'trump': t_tuples1}
+        timeseries_no_gaussian[state] = {'biden': b_tuples2,
+                                         'trump': t_tuples2}
 
     # Save the timeseries data
     with open('../tmp/timeseries.pkl', 'wb') as f:
         pickle.dump(timeseries, f)
+
+    # Save the timeseries data without Gaussian kernel
+    with open('../tmp/timeseries_no_gaussian.pkl', 'wb') as f:
+        pickle.dump(timeseries_no_gaussian, f)
 
 
 if __name__ == '__main__':
