@@ -101,7 +101,7 @@ def average_kmeans_clustering(X, n_iter=100):
 
     # Perform clustering n_iter times
     for i in range(n_iter):
-        cluster_assignments[i], _ = perform_clustering(X, random_state=i * 10)
+        cluster_assignments[i], _ = perform_clustering(X, random_state=i * 58)
     mean_clustering = np.mean(cluster_assignments, axis=0)
 
     #  Clamp each element to 0 or 1

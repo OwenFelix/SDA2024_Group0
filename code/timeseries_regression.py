@@ -69,8 +69,8 @@ def get_state_color_map():
     """
     return {
         'CA': 'blue', 'NY': 'blue', 'IL': 'blue', 'WA': 'blue',
-        'MI': 'swing', 'TX': 'red', 'FL': 'swing', 'GA': 'red',
-        'OH': 'swing', 'NC': 'swing', 'PA': 'swing', 'AZ': 'swing',
+        'MI': 'swing', 'TX': 'red', 'FL': 'red', 'GA': 'red',
+        'OH': 'red', 'NC': 'swing', 'PA': 'swing', 'AZ': 'red',
         'MA': 'blue', 'NJ': 'blue', 'VA': 'blue', 'TN': 'red',
         'IN': 'red', 'MO': 'red', 'MD': 'blue', 'WI': 'swing',
         'MN': 'swing', 'CO': 'swing', 'AL': 'red', 'SC': 'red',
@@ -80,7 +80,8 @@ def get_state_color_map():
         'NV': 'swing', 'KS': 'red', 'NM': 'swing', 'NE': 'red',
         'ID': 'red', 'WV': 'red', 'HI': 'blue', 'ME': 'swing',
         'NH': 'swing', 'MT': 'red', 'RI': 'blue', 'DE': 'blue',
-        'ND': 'red', 'AK': 'red', 'VT': 'blue', 'WY': 'red'
+        'ND': 'red', 'AK': 'red', 'VT': 'blue', 'WY': 'red', 'SD': 'red',
+        'OK': 'red', 'DC': 'blue'
     }
 
 
@@ -118,7 +119,7 @@ def extract_features(timeseries_features, state_color_map, election_results):
                        for state in swing_states])
     y_swing = np.array([election_results[state] for state in swing_states])
 
-    return X_train, y_train, X_swing, y_swing
+    return X_train, y_train, X_swing, y_swing, swing_states
 
 
 def encode_labels(y_train, y_swing):
@@ -175,7 +176,7 @@ def hyperparameter_tuning(pipeline, X_train, y_train):
         The training labels.
     """
     param_grid = {
-        'model__C': [0.15, 0.175, 0.2, 0.1],
+        'model__C': [0.001, 0.01, 0.1, 1, 10, 100],
         'model__penalty': ['l2']
     }
     grid_search = GridSearchCV(
@@ -185,7 +186,7 @@ def hyperparameter_tuning(pipeline, X_train, y_train):
 
 
 def evaluate_model(final_model, X_train, y_train,
-                   X_swing, y_swing, label_encoder):
+                   X_swing, y_swing, label_encoder, swing_states):
     """
     Evaluate the model on the swing states.
 
@@ -209,6 +210,12 @@ def evaluate_model(final_model, X_train, y_train,
         swing_predictions)
     print(f"Predicted swing states: {swing_predictions_decoded}")
 
+    # Compare decoded predictions with y_swing and return the indices of
+    # the incorrect predictions to print the corresponding swing states
+    incorrect_predictions = np.where(swing_predictions != y_swing)[0]
+    incorrect_swing_states = [swing_states[i] for i in incorrect_predictions]
+    print(f"Incorrect swing states: {incorrect_swing_states}")
+
     accuracy = np.mean(swing_predictions == y_swing)
     print(f'Swing state accuracy: {accuracy:.2f}')
 
@@ -220,16 +227,19 @@ def evaluate_model(final_model, X_train, y_train,
     print(f'F1 score: {f1:.2f}')
 
 
-def test_robustness(final_model, X_train, y_train, X_swing, y_swing):
+def test_robustness(final_model, X_train, y_train,
+                    X_swing, y_swing, swing_states):
     """
     Test the robustness of the model by adding noise to the features.
     Perform hypothesis testing to check if the model performs significantly
     better than random guessing.
     """
     n = 1000
+    n_swing_states = 14
     accuracy = []
     cv_accuracy = []
     f1 = []
+    average_predictions_per_state = []
 
     for _ in range(n):
         # Add noise to the features
@@ -241,10 +251,12 @@ def test_robustness(final_model, X_train, y_train, X_swing, y_swing):
 
         # Evaluate the model
         swing_predictions = final_model.predict(X_swing_noisy)
-        accuracy.append(np.mean(swing_predictions == y_swing))
+        incorrect_predictions = np.where(swing_predictions != y_swing)[0]
+        average_predictions_per_state.append(swing_predictions)
 
+        accuracy.append(1.0 - len(incorrect_predictions) / n_swing_states)
         cv_accuracy.append(np.mean(cross_val_score(
-            final_model, X_train_noisy, y_train, cv=5)))
+            final_model, X_train_noisy, y_train, cv=2)))
         f1.append(f1_score(y_swing, swing_predictions))
 
     # Convert to numpy arrays
@@ -252,38 +264,48 @@ def test_robustness(final_model, X_train, y_train, X_swing, y_swing):
     cv_accuracy = np.array(cv_accuracy)
     f1 = np.array(f1)
 
+    # Calculate average predictions per state
+    average_color_predictions = [sum(x) / len(x)
+                                 for x in zip(*average_predictions_per_state)]
+    # Now for each element, clamp to 0 or 1
+    average_color_predictions = [
+        0 if x < 0.5 else 1 for x in average_color_predictions]
+    incorrect_predictions = np.where(average_color_predictions != y_swing)[0]
+    incorrect_swing_states = [swing_states[i] for i in incorrect_predictions]
+    print(f"Incorrect swing states: {incorrect_swing_states}")
+
     # Calculate average metrics
-    print(f'Average swing state accuracy: {np.mean(accuracy):.2f}')
+    prediction_accuracy = 1.0 - len(incorrect_predictions) / n_swing_states
+    print(f'Average swing state accuracy: {prediction_accuracy:.2f}')
     print(f'Average cross-validation accuracy: {np.mean(cv_accuracy):.2f}')
     print(f'Average F1 score: {np.mean(f1):.2f}')
 
     # Calculate 95% confidence intervals
     print(
-        f'Accuracy 95% confidence interval:'
-        f'{np.percentile(accuracy, [2.5, 97.5])}')
+        f'Swing state accuracy 95% confidence interval:'
+        f'{np.percentile(accuracy, [2.5, 97.5])}'
+    )
     print(
         f'Cross-validation accuracy 95% confidence interval:'
         f'{np.percentile(cv_accuracy, [2.5, 97.5])}')
     print(
-        f'F1 score 95% confidence interval:'
-        f'{np.percentile(f1, [2.5, 97.5])}')
+        f'F1 score 95% confidence interval: {np.percentile(f1, [2.5, 97.5])}')
 
     # Perform hypothesis testing (H₀: mean = 0.50, H₁: mean > 0.50)
-    accuracy_p_value = ttest_1samp(
+    prediction_accuracy_p_value = ttest_1samp(
         accuracy, popmean=0.50, alternative='greater').pvalue
     cv_accuracy_p_value = ttest_1samp(
         cv_accuracy, popmean=0.50, alternative='greater').pvalue
     f1_p_value = ttest_1samp(f1, popmean=0.50, alternative='greater').pvalue
 
-    print(f'Accuracy p-value: {accuracy_p_value:.4f}')
+    print(f'Swing state accuracy p-value: {prediction_accuracy_p_value:.4f}')
     print(f'Cross-validation accuracy p-value: {cv_accuracy_p_value:.4f}')
     print(f'F1 score p-value: {f1_p_value:.4f}')
 
-    if accuracy_p_value < 0.05:
-        print('Reject null hypothesis for accuracy')
+    if prediction_accuracy_p_value < 0.05:
+        print('Reject null hypothesis for swing state accuracy')
     else:
-        print('Fail to reject null hypothesis for accuracy')
-
+        print('Fail to reject null hypothesis for swing state accuracy')
     if cv_accuracy_p_value < 0.05:
         print('Reject null hypothesis for cross-validation accuracy')
     else:
@@ -302,22 +324,19 @@ def main():
     state_color_map = get_state_color_map()
 
     # Extract features and labels
-    X_train, y_train, X_swing, y_swing = extract_features(
+    X_train, y_train, X_swing, y_swing, swing_states = extract_features(
         timeseries_features, state_color_map, election_results)
 
     # Encode labels
-    y_train, y_swing, label_encoder = encode_labels(y_train, y_swing)
+    y_train, y_swing, _ = encode_labels(y_train, y_swing)
 
     # Build the logistic regression pipeline
     pipeline = build_pipeline()
-    final_model = hyperparameter_tuning(pipeline, X_train, y_train)
+    best = hyperparameter_tuning(pipeline, X_train, y_train)
 
-    # Evaluate the model
-    evaluate_model(final_model, X_train, y_train,
-                   X_swing, y_swing, label_encoder)
-
-    # Test the robustness of the model
-    test_robustness(final_model, X_train, y_train, X_swing, y_swing)
+    # Test the robustness of the model and evaluate it
+    test_robustness(best, X_train,
+                    y_train, X_swing, y_swing, swing_states)
 
 
 if __name__ == "__main__":
