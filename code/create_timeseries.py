@@ -141,11 +141,11 @@ def main():
                                          'trump': t_tuples2}
 
     # Save the timeseries data
-    with open('tmp/timeseries.pkl', 'wb') as f:
+    with open('../tmp/timeseries.pkl', 'wb') as f:
         pickle.dump(timeseries, f)
 
     # Save the timeseries data without Gaussian kernel
-    with open('tmp/timeseries_no_gaussian.pkl', 'wb') as f:
+    with open('../tmp/timeseries_no_gaussian.pkl', 'wb') as f:
         pickle.dump(timeseries_no_gaussian, f)
 
 

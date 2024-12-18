@@ -48,7 +48,7 @@ elif sys.argv[1] == "False":
     print("Downloading clean data...")
 
     # First make sure the data folder and its subfolders exist
-    Path(__file__).parent.joinpath("tmp").mkdir(
+    Path(__file__).parent.joinpath("..", "tmp").mkdir(
         parents=True, exist_ok=True)
 
     # Define the file names and URLs
@@ -58,7 +58,10 @@ elif sys.argv[1] == "False":
     # Define the URL
     URL_cleaned = "https://drive.usercontent.google.com/download?id=1m-FqDOUcoZOfBkMqnX5OAfpzEQYjQSjo&export=download&authuser=0"
 
-    if (Path(__file__).parent / ".." / "tmp" / "cleaned_hashtag_joebiden.csv").exists() and (Path(__file__).parent / "tmp" / "cleaned_hashtag_donaldtrump.csv").exists():
+    if (Path(__file__).parent / ".." / "tmp" /
+        "cleaned_hashtag_joebiden.csv").exists() \
+        and (Path(__file__).parent / "tmp" /
+             "cleaned_hashtag_donaldtrump.csv").exists():
         print("Data already downloaded")
     else:
         # Download the data
@@ -67,10 +70,10 @@ elif sys.argv[1] == "False":
 # Run create_timeseries.py
 print("Creating timeseries data...")
 print("This will take about five to ten minutes...")
-subprocess.run(["python3", "code/create_timeseries.py"])
+subprocess.run(["python3", "create_timeseries.py"])
 print("Timeseries data created successfully!\n")
 
 # Run analyze_timeseries.py
 print("Analyzing timeseries data...")
-subprocess.run(["python3", "code/analyze_timeseries.py"])
+subprocess.run(["python3", "analyze_timeseries.py"])
 print("Timeseries data analyzed successfully\n!")

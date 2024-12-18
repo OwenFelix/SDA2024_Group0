@@ -282,10 +282,12 @@ def test_robustness(final_model, X_train, y_train,
 
     # Calculate 95% confidence intervals
     print(
-        f'Swing state accuracy 95% confidence interval: {np.percentile(accuracy, [2.5, 97.5])}'
+        f'Swing state accuracy 95% confidence interval:'
+        f'{np.percentile(accuracy, [2.5, 97.5])}'
     )
     print(
-        f'Cross-validation accuracy 95% confidence interval: {np.percentile(cv_accuracy, [2.5, 97.5])}')
+        f'Cross-validation accuracy 95% confidence interval:'
+        f'{np.percentile(cv_accuracy, [2.5, 97.5])}')
     print(
         f'F1 score 95% confidence interval: {np.percentile(f1, [2.5, 97.5])}')
 
